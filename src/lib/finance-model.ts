@@ -4,7 +4,7 @@ export type TransactionDraft = {
   date: string;
   merchant: string;
   category?: string;
-  owner?: string;
+  account?: string;
   amount: number;
   signal?: Transaction["signal"];
   source: Transaction["source"];
@@ -27,7 +27,7 @@ export function makeTransaction(draft: TransactionDraft, rules: CategoryRule[]):
     date: draft.date,
     merchant: draft.merchant,
     category: draft.category?.trim() || rule?.category || "Uncategorized",
-    owner: draft.owner?.trim() || rule?.owner || "Finance",
+    account: draft.account?.trim() || rule?.account || "Checking",
     amount: draft.amount,
     signal: draft.signal || rule?.signal || "Watch",
     source: draft.source,
@@ -76,7 +76,7 @@ export function parseCsvTransactions(csv: string, rules: CategoryRule[]) {
     const values = splitCsvLine(line);
     const row = Object.fromEntries(headers.map((header, index) => [header, values[index]?.trim() ?? ""]));
     const amount = Number(row.amount?.replace(/[$,]/g, ""));
-    const merchant = row.merchant || row.description || row.vendor;
+    const merchant = row.merchant || row.description || row.payee;
 
     if (!merchant || Number.isNaN(amount)) {
       return [];
@@ -88,9 +88,9 @@ export function parseCsvTransactions(csv: string, rules: CategoryRule[]) {
           date: row.date || new Date().toISOString().slice(0, 10),
           merchant,
           category: row.category,
-          owner: row.owner,
+          account: row.account,
           amount: Math.abs(amount),
-          signal: normalizeSignal(row.signal),
+          signal: normalizeSignal(row.signal || row.status),
           source: "CSV",
           recurring: row.recurring?.toLowerCase() === "true",
         },
@@ -100,28 +100,26 @@ export function parseCsvTransactions(csv: string, rules: CategoryRule[]) {
   });
 }
 
-export function scenarioSummary(transactions: Transaction[], reductionPercent: number) {
-  const controllableCategories = new Set(["Cloud", "Sales", "Software", "Travel", "Operations"]);
-  const controllable = transactions
-    .filter((transaction) => controllableCategories.has(transaction.category))
+export function savingsPlanSummary(transactions: Transaction[], reductionPercent: number) {
+  const flexibleCategories = new Set(["Groceries", "Transport", "Subscriptions", "Shopping", "Dining"]);
+  const flexibleSpend = transactions
+    .filter((transaction) => flexibleCategories.has(transaction.category))
     .reduce((total, transaction) => total + transaction.amount, 0);
-  const monthlySavings = controllable * (reductionPercent / 100);
+  const monthlySavings = flexibleSpend * (reductionPercent / 100);
   const annualSavings = monthlySavings * 12;
-  const runwayMonths = monthlySavings > 0 ? monthlySavings / 95000 : 0;
 
   return {
-    controllable,
+    flexibleSpend,
     monthlySavings,
     annualSavings,
-    runwayMonths,
   };
 }
 
 function normalizeSignal(value?: string): Transaction["signal"] | undefined {
   const signal = value?.toLowerCase();
 
-  if (signal === "approved") {
-    return "Approved";
+  if (signal === "cleared") {
+    return "Cleared";
   }
 
   if (signal === "review") {

@@ -46,24 +46,24 @@ type Message = {
 function responseFor(input: string) {
   const query = input.toLowerCase();
 
-  if (query.includes("duplicate") || query.includes("saas")) {
-    return "Duplicate design seats and the sales intelligence renewal should be reviewed first. Together they represent $11.8K of near-term controllable spend.";
-  }
-
-  if (query.includes("runway") || query.includes("scenario") || query.includes("10")) {
-    return "A 10 percent reduction across cloud, sales tools, and travel adds roughly 2.1 months of runway without touching core hiring.";
-  }
-
-  if (query.includes("approval") || query.includes("review")) {
+  if (query.includes("subscription") || query.includes("review")) {
     const count = transactions.filter((transaction) => transaction.signal === "Review").length;
-    return `${count} items need review today. Start with the founders retreat deposit, then clean up duplicate design seats.`;
+    return `${count} subscription or expense needs review. Start with Netflix, then check any new imported recurring charges.`;
   }
 
-  if (query.includes("burn") || query.includes("changed")) {
-    return "Burn is down 8.4 percent against plan. The main contributors are cloud credit usage, paused contractor spend, and slower travel release.";
+  if (query.includes("saving") || query.includes("plan") || query.includes("10")) {
+    return "A 10 percent trim across groceries, transport, subscriptions, and shopping creates a simple monthly savings target without touching rent or bills.";
   }
 
-  return "I can summarize burn movement, find duplicate spend, build savings scenarios, or identify approvals due today.";
+  if (query.includes("bill") || query.includes("coming")) {
+    return "You have rent, subscriptions, utilities, and card payments to track this cycle. The tracker highlights recurring items so they do not surprise you.";
+  }
+
+  if (query.includes("spend") || query.includes("month")) {
+    return "You are tracking monthly spend against category budgets. Groceries and subscriptions are the first places to review this month.";
+  }
+
+  return "I can summarize monthly spending, find subscriptions to review, build savings plans, or show upcoming bills.";
 }
 
 export function VoiceAnalyst() {
@@ -73,7 +73,7 @@ export function VoiceAnalyst() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "analyst",
-      text: "Ask about burn, runway, vendor overlap, approvals, or savings scenarios.",
+      text: "Ask about monthly spend, subscriptions, bills, budgets, or savings plans.",
     },
   ]);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
@@ -146,15 +146,15 @@ export function VoiceAnalyst() {
     recognitionRef.current = recognition;
     recognition.start();
     setListening(true);
-    setStatus("Listening for a finance command");
+    setStatus("Listening for a money question");
   }
 
   return (
     <section className="border border-ink/15 bg-ink text-paper">
       <div className="flex items-center justify-between border-b border-paper/10 px-4 py-3">
         <div>
-          <p className="text-xs uppercase tracking-[0.22em] text-paper/55">Voice analyst</p>
-          <h2 className="mt-1 text-lg font-semibold">Decision desk</h2>
+          <p className="text-xs uppercase tracking-[0.22em] text-paper/55">Voice helper</p>
+          <h2 className="mt-1 text-lg font-semibold">Money questions</h2>
         </div>
         <button
           type="button"
@@ -195,7 +195,7 @@ export function VoiceAnalyst() {
           <input
             value={input}
             onChange={(event) => setInput(event.target.value)}
-            placeholder="Ask about burn, runway, approvals..."
+            placeholder="Ask about spending, bills, savings..."
             className="min-w-0 flex-1 border border-paper/15 bg-paper/8 px-3 py-3 text-sm text-paper outline-none placeholder:text-paper/35 focus:border-brass"
           />
           <button

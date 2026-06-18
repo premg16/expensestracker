@@ -1,5 +1,5 @@
 {
-  "name": "executive-expense-command",
+  "name": "personal-expense-tracker",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -12,6 +12,8 @@
   "dependencies": {
     "lucide-react": "latest",
     "next": "latest",
+    "next-auth": "^4.24.14",
+    "openai": "^6.44.0",
     "react": "latest",
     "react-dom": "latest"
   },

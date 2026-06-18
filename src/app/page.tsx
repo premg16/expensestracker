@@ -1,5 +1,5 @@
-import { FinanceCommandCenter } from "@/components/finance-command-center";
+import { LandingPage } from "@/components/landing-page";
 
 export default function Home() {
-  return <FinanceCommandCenter />;
+  return <LandingPage />;
 }

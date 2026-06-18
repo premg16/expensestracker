@@ -3,9 +3,9 @@ export type Transaction = {
   date: string;
   merchant: string;
   category: string;
-  owner: string;
+  account: string;
   amount: number;
-  signal: "Watch" | "Approved" | "Review";
+  signal: "Watch" | "Cleared" | "Review";
   source: "Manual" | "CSV" | "Bank";
   recurring?: boolean;
 };
@@ -13,173 +13,172 @@ export type Transaction = {
 export type Budget = {
   category: string;
   limit: number;
-  owner: string;
+  account: string;
 };
 
 export type CategoryRule = {
   id: string;
   matcher: string;
   category: string;
-  owner: string;
+  account: string;
   signal: Transaction["signal"];
 };
 
 export const kpis = [
   {
-    label: "Monthly burn",
-    value: "$184.2K",
-    change: "-8.4%",
+    label: "Spent this month",
+    value: "$4,286",
+    change: "-6.2%",
     tone: "good",
-    detail: "lower than board plan",
+    detail: "lower than last month",
   },
   {
-    label: "Runway",
-    value: "21.7 mo",
-    change: "+2.1 mo",
+    label: "Left to budget",
+    value: "$1,214",
+    change: "22%",
     tone: "good",
-    detail: "after vendor actions",
+    detail: "available for the month",
   },
   {
-    label: "Unreviewed spend",
-    value: "$27.8K",
-    change: "14 items",
+    label: "Bills due",
+    value: "$820",
+    change: "4 items",
     tone: "warn",
-    detail: "needs owner decision",
+    detail: "due in the next 7 days",
   },
   {
-    label: "Savings pipeline",
-    value: "$1.42M",
-    change: "12 levers",
+    label: "Savings rate",
+    value: "18.5%",
+    change: "+2.4%",
     tone: "neutral",
-    detail: "annualized options",
+    detail: "after recurring expenses",
   },
 ];
 
 export const allocations = [
-  { name: "People", value: 42, amount: "$77.4K", color: "bg-ink" },
-  { name: "Cloud", value: 21, amount: "$38.6K", color: "bg-verdant" },
-  { name: "Sales", value: 17, amount: "$31.3K", color: "bg-brass" },
-  { name: "Travel", value: 9, amount: "$16.6K", color: "bg-coral" },
-  { name: "Other", value: 11, amount: "$20.3K", color: "bg-steel" },
+  { name: "Housing", value: 35, amount: "$1.5K", color: "bg-ink" },
+  { name: "Groceries", value: 18, amount: "$770", color: "bg-verdant" },
+  { name: "Transport", value: 11, amount: "$470", color: "bg-brass" },
+  { name: "Subscriptions", value: 9, amount: "$386", color: "bg-coral" },
+  { name: "Shopping", value: 13, amount: "$557", color: "bg-steel" },
 ];
 
 export const cashFlow = [
-  { month: "Jan", actual: 156, planned: 174 },
-  { month: "Feb", actual: 171, planned: 180 },
-  { month: "Mar", actual: 169, planned: 182 },
-  { month: "Apr", actual: 188, planned: 186 },
-  { month: "May", actual: 181, planned: 192 },
-  { month: "Jun", actual: 164, planned: 190 },
+  { month: "Jan", actual: 3920, planned: 4300 },
+  { month: "Feb", actual: 4080, planned: 4300 },
+  { month: "Mar", actual: 4510, planned: 4400 },
+  { month: "Apr", actual: 4275, planned: 4400 },
+  { month: "May", actual: 4390, planned: 4500 },
+  { month: "Jun", actual: 4286, planned: 4500 },
 ];
 
 export const transactions: Transaction[] = [
   {
-    id: "txn-aws-credits",
-    date: "2026-06-02",
-    merchant: "AWS enterprise credits",
-    category: "Cloud",
-    owner: "Infra",
-    amount: 18420,
-    signal: "Approved",
+    id: "txn-rent",
+    date: "2026-06-01",
+    merchant: "Apartment rent",
+    category: "Housing",
+    account: "Checking",
+    amount: 1500,
+    signal: "Cleared",
     source: "Bank",
     recurring: true,
   },
   {
-    id: "txn-retreat-deposit",
+    id: "txn-groceries",
     date: "2026-06-04",
-    merchant: "Founders retreat deposit",
-    category: "Travel",
-    owner: "CEO office",
-    amount: 12400,
-    signal: "Review",
+    merchant: "Whole Foods Market",
+    category: "Groceries",
+    account: "Credit card",
+    amount: 186,
+    signal: "Cleared",
     source: "Manual",
   },
   {
-    id: "txn-sales-renewal",
+    id: "txn-uber",
     date: "2026-06-08",
-    merchant: "Sales intelligence renewal",
-    category: "Sales",
-    owner: "Revenue",
-    amount: 9600,
+    merchant: "Uber trip",
+    category: "Transport",
+    account: "Credit card",
+    amount: 42,
     signal: "Watch",
     source: "Bank",
-    recurring: true,
   },
   {
-    id: "txn-legal-retainer",
+    id: "txn-netflix",
     date: "2026-06-12",
-    merchant: "Legal counsel retainer",
-    category: "Operations",
-    owner: "Finance",
-    amount: 7200,
-    signal: "Approved",
+    merchant: "Netflix subscription",
+    category: "Subscriptions",
+    account: "Credit card",
+    amount: 23,
+    signal: "Review",
     source: "CSV",
     recurring: true,
   },
   {
-    id: "txn-design-seats",
+    id: "txn-pharmacy",
     date: "2026-06-15",
-    merchant: "Duplicate design seats",
-    category: "Software",
-    owner: "Product",
-    amount: 2240,
-    signal: "Review",
+    merchant: "CVS Pharmacy",
+    category: "Health",
+    account: "Debit card",
+    amount: 64,
+    signal: "Cleared",
     source: "Bank",
-    recurring: true,
   },
 ];
 
 export const budgets: Budget[] = [
-  { category: "Cloud", limit: 42000, owner: "Infra" },
-  { category: "Travel", limit: 14000, owner: "CEO office" },
-  { category: "Sales", limit: 26000, owner: "Revenue" },
-  { category: "Software", limit: 18000, owner: "Product" },
-  { category: "Operations", limit: 22000, owner: "Finance" },
+  { category: "Housing", limit: 1650, account: "Checking" },
+  { category: "Groceries", limit: 650, account: "Credit card" },
+  { category: "Transport", limit: 350, account: "Credit card" },
+  { category: "Subscriptions", limit: 120, account: "Credit card" },
+  { category: "Shopping", limit: 450, account: "Credit card" },
+  { category: "Health", limit: 250, account: "Debit card" },
 ];
 
 export const categoryRules: CategoryRule[] = [
   {
-    id: "rule-aws-cloud",
-    matcher: "aws",
-    category: "Cloud",
-    owner: "Infra",
-    signal: "Approved",
+    id: "rule-rent",
+    matcher: "rent",
+    category: "Housing",
+    account: "Checking",
+    signal: "Cleared",
   },
   {
-    id: "rule-sales-tools",
-    matcher: "sales",
-    category: "Sales",
-    owner: "Revenue",
+    id: "rule-grocery",
+    matcher: "market",
+    category: "Groceries",
+    account: "Credit card",
+    signal: "Cleared",
+  },
+  {
+    id: "rule-ride",
+    matcher: "uber",
+    category: "Transport",
+    account: "Credit card",
     signal: "Watch",
   },
   {
-    id: "rule-seat-overlap",
-    matcher: "duplicate",
-    category: "Software",
-    owner: "Product",
-    signal: "Review",
-  },
-  {
-    id: "rule-retreat-policy",
-    matcher: "retreat",
-    category: "Travel",
-    owner: "CEO office",
+    id: "rule-subscription",
+    matcher: "subscription",
+    category: "Subscriptions",
+    account: "Credit card",
     signal: "Review",
   },
 ];
 
 export const assistantPrompts = [
-  "What changed in burn this month?",
-  "Find duplicate SaaS spend",
-  "Create a 10 percent savings scenario",
-  "Which expenses need approval today?",
+  "How much did I spend this month?",
+  "Find subscriptions I should review",
+  "Create a 10 percent savings plan",
+  "Which bills are coming up?",
 ];
 
 export const tickerItems = [
-  "Cloud variance -12.8%",
-  "Travel deposits above policy",
-  "Two vendor renewals due Friday",
-  "Runway improves after seat cleanup",
-  "Sales tools overlap detected",
-  "June burn tracking below plan",
+  "Rent cleared on June 1",
+  "Netflix is up for review",
+  "Groceries are tracking close to budget",
+  "Savings rate improved this month",
+  "Transport spend is below plan",
+  "Four bills due this week",
 ];

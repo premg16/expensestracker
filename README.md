@@ -1,16 +1,16 @@
-# Ledger Command
+# Float
 
-Ledger Command turns the old academic expense tracker into a portfolio-grade finance command center. The product direction is no longer "add an expense and see a chart." It is an executive operating room for burn, runway, vendor risk, approvals, and spoken financial decisions.
+Float is a frontend portfolio product for personal finance. It is designed to look like a consumer app that is already in-market: vibrant landing page, premium auth, multi-page app shell, PWA setup, realistic money data, and polished micro-interactions.
 
 ## Current Build
 
-- Next.js App Router with TypeScript.
-- Tailwind CSS v4 styling.
-- Responsive dashboard for mobile and desktop.
-- Local voice-command prototype using browser speech capture when available.
-- Manual transaction entry, CSV import, search, filters, category rules, approval signals, budget setup, and scenario planning.
-- Seed executive finance data so the app runs without bank, database, or model setup.
-- Legacy static build preserved in `legacy-static/`.
+- Marketing landing page at `/` with lifestyle imagery, animated SVGs, scale metrics, testimonials, and product narrative.
+- Premium sign-in page at `/sign-in` with Google route, passkey-style UI, and direct app access.
+- Multi-page app at `/app`, `/app/activity`, `/app/budgets`, and `/app/cards`.
+- Product data layer with realistic accounts, transactions, budgets, subscriptions, challenges, trust states, and user profile.
+- Server-side OpenAI route at `/api/assistant`.
+- PWA manifest and service worker.
+- Vercel config using Bun.
 
 ## Run Locally
 
@@ -21,56 +21,47 @@ bun run dev
 
 Then open the local URL shown in the terminal.
 
-## Product Positioning
+## Environment
 
-The consumer budgeting market is crowded. YNAB owns disciplined zero-based budgeting, Monarch owns household planning and net worth, Rocket Money owns subscription cancellation, Copilot Money owns polished premium tracking, and Cleo owns conversational coaching.
+Create `.env.local` from `.env.example`:
 
-Ledger Command should not compete as another simple tracker. The stronger wedge is:
+```bash
+cp .env.example .env.local
+```
 
-> A private finance command center for high-agency operators who want decisions, controls, and forecasts from their money data.
+Required for live integrations:
 
-## Roadmap
+- `GOOGLE_CLIENT_ID`
+- `GOOGLE_CLIENT_SECRET`
+- `NEXTAUTH_SECRET`
+- `NEXTAUTH_URL`
+- `OPENAI_API_KEY`
+- `OPENAI_MODEL`
 
-1. **Portfolio MVP**
-   - Upgrade visual system.
-   - Show executive dashboard, spend mix, policy signals, and transactions.
-   - Add local voice-command prototype.
+## Product Direction
 
-2. **Product MVP**
-   - Add authenticated accounts.
-   - Store transactions, categories, budgets, merchants, and approvals.
-   - Add CSV import and manual entry.
-   - Add assistant route for streamed finance answers.
+The goal is frontend hiring impact. Float should feel like a real, loved finance product even when backend integrations are mocked.
 
-3. **Premium Product**
-   - Bank sync through a provider such as Plaid or Teller.
-   - Receipt capture and extraction.
-   - Vendor renewal detection.
-   - Forecasting and scenario planning.
-   - Approval workflow with audit log.
+Core promise:
 
-4. **Executive Differentiation**
-   - Board-ready monthly brief.
-   - Voice-first transaction search.
-   - Human approval gates for money-moving actions.
-   - Privacy-first controls for sensitive financial data.
+- Make spending easy to understand.
+- Make bills and subscriptions visible before they surprise the user.
+- Make budgeting feel visual and approachable.
+- Make the app feel excellent on mobile and desktop.
+- Keep the experience portfolio-ready without pretending the backend is complete.
 
-## Suggested Stack
+## Deploy On Vercel
 
-- Next.js, React, TypeScript, Tailwind CSS.
-- Vercel deployment.
-- PostgreSQL with Drizzle or Prisma.
-- Auth through Clerk, Auth.js, or Supabase Auth.
-- Vercel AI SDK for streaming assistant UX once data models are ready.
-- Plaid or Teller for account aggregation.
-- Background jobs for recurring categorization, alerts, and renewal checks.
+1. Push `main`.
+2. Import the repo in Vercel.
+3. Add the environment variables above.
+4. Build command: `bun run build`.
+5. Install command: `bun install`.
 
-## Portfolio Story
+## Next Build Priorities
 
-Use this as a "product transformation" case study:
-
-- Started with an academic expense tracker.
-- Researched the competitive category.
-- Repositioned the app around executive decisions.
-- Rebuilt the repository into a modern maintainable stack.
-- Added a credible assistant and voice path without pretending the full backend exists yet.
+1. Add authenticated route protection.
+2. Add database persistence for users, accounts, transactions, budgets, and subscriptions.
+3. Add import review queue for CSV, email alerts, and bank sync previews.
+4. Add real provider connection screens.
+5. Add Playwright flows for landing, auth, app navigation, and PWA installability.
