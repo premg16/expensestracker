@@ -1,0 +1,8 @@
+.next/
+out/
+node_modules/
+.env*
+!.env.example
+bun.lockb
+*.tsbuildinfo
+.DS_Store

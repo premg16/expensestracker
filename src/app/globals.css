@@ -1,0 +1,85 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Avenir Next", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "SF Mono", "Cascadia Code", ui-monospace, monospace;
+  --color-ink: #101214;
+  --color-charcoal: #202426;
+  --color-paper: #f8f7f2;
+  --color-line: #ded9cc;
+  --color-verdant: #0f6b52;
+  --color-brass: #a9772b;
+  --color-coral: #c44f3d;
+  --color-steel: #66757f;
+}
+
+:root {
+  color-scheme: light;
+  background: #f8f7f2;
+  color: #101214;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  overflow-x: hidden;
+  background:
+    linear-gradient(110deg, rgba(16, 18, 20, 0.05) 0 1px, transparent 1px 90px),
+    linear-gradient(180deg, #f8f7f2 0%, #eeece3 48%, #f7f4eb 100%);
+  color: #101214;
+  font-family: var(--font-sans);
+  letter-spacing: 0;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+::selection {
+  background: #101214;
+  color: #f8f7f2;
+}
+
+.hairline-grid {
+  background-image:
+    linear-gradient(rgba(16, 18, 20, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(16, 18, 20, 0.08) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+.ticker {
+  animation: ticker 28s linear infinite;
+}
+
+.pulse-ring {
+  animation: pulse-ring 1.8s ease-out infinite;
+}
+
+@keyframes ticker {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    opacity: 0.55;
+    transform: scale(0.92);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.38);
+  }
+}
