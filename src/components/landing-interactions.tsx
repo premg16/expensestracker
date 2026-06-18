@@ -107,15 +107,24 @@ function useProblemScroll(rootRef: RefObject<HTMLElement | null>) {
 
     const section = root.querySelector<HTMLElement>("[data-problem-scroll='true']");
     const stage = section?.querySelector<HTMLElement>("[data-problem-stage]");
+    const titleWords = Array.from(section?.querySelectorAll<HTMLElement>("[data-problem-word]") ?? []);
     if (!section || !stage) {
       return;
     }
+
+    const clamp = (value: number) => Math.max(0, Math.min(1, value));
+    const range = (value: number, start: number, end: number) => clamp((value - start) / (end - start));
 
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     if (reduceMotion.matches) {
       stage.dataset.problemStage = "step-3";
       stage.dataset.problemStep = "2";
       stage.style.setProperty("--problem-progress", "1");
+      stage.style.setProperty("--problem-eyebrow-progress", "1");
+      stage.style.setProperty("--problem-title-progress", "1");
+      stage.style.setProperty("--problem-dock-progress", "1");
+      stage.style.setProperty("--problem-content-progress", "1");
+      titleWords.forEach((word) => word.style.setProperty("--word-progress", "1"));
       return;
     }
 
@@ -125,16 +134,16 @@ function useProblemScroll(rootRef: RefObject<HTMLElement | null>) {
       if (progress < 0.08) {
         return { stageName: "prelude", step: "-1" };
       }
-      if (progress < 0.22) {
-        return { stageName: "intro", step: "-1" };
-      }
-      if (progress < 0.34) {
-        return { stageName: "dock", step: "-1" };
+      if (progress < 0.42) {
+        return { stageName: "title", step: "-1" };
       }
       if (progress < 0.56) {
+        return { stageName: "dock", step: "-1" };
+      }
+      if (progress < 0.72) {
         return { stageName: "step-1", step: "0" };
       }
-      if (progress < 0.78) {
+      if (progress < 0.86) {
         return { stageName: "step-2", step: "1" };
       }
       return { stageName: "step-3", step: "2" };
@@ -146,10 +155,24 @@ function useProblemScroll(rootRef: RefObject<HTMLElement | null>) {
       const scrollable = Math.max(1, rect.height - window.innerHeight);
       const progress = Math.max(0, Math.min(1, -rect.top / scrollable));
       const { stageName, step } = getStage(progress);
+      const eyebrowProgress = range(progress, 0, 0.18);
+      const titleProgress = range(progress, 0.08, 0.4);
+      const dockProgress = range(progress, 0.42, 0.56);
+      const contentProgress = range(progress, 0.52, 1);
 
       stage.dataset.problemStage = stageName;
       stage.dataset.problemStep = step;
       stage.style.setProperty("--problem-progress", progress.toFixed(4));
+      stage.style.setProperty("--problem-eyebrow-progress", eyebrowProgress.toFixed(4));
+      stage.style.setProperty("--problem-title-progress", titleProgress.toFixed(4));
+      stage.style.setProperty("--problem-dock-progress", dockProgress.toFixed(4));
+      stage.style.setProperty("--problem-content-progress", contentProgress.toFixed(4));
+      titleWords.forEach((word, index) => {
+        const wordStart = titleWords.length <= 1 ? 0 : (index / (titleWords.length - 1)) * 0.7;
+        const wordProgress = clamp((titleProgress - wordStart) / 0.24);
+
+        word.style.setProperty("--word-progress", wordProgress.toFixed(4));
+      });
     };
 
     const requestUpdate = () => {

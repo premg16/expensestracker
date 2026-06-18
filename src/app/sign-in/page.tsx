@@ -1,5 +1,5 @@
-import { ArrowLeft, BadgeCheck, Fingerprint, KeyRound, ShieldCheck, Sparkles } from "lucide-react";
 import { HapticLink } from "@/components/haptic-link";
+import { ArrowLeft, BadgeCheck, Fingerprint, KeyRound, ShieldCheck, Sparkles } from "lucide-react";
 
 const trustItems = ["Google OAuth route", "Passkey-ready interface", "Preview-ready app access", "Server-side secrets"];
 
@@ -8,7 +8,7 @@ export default function SignInPage() {
     <main className="relative min-h-screen overflow-hidden px-4 py-6 text-ink sm:px-6 lg:px-8">
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute left-[-10rem] top-24 h-96 w-96 rounded-full bg-white/40 blur-3xl" />
-        <div className="absolute right-[-8rem] top-8 h-96 w-96 rounded-full bg-[#87dcfb]/55 blur-3xl" />
+        <div className="absolute right-[-8rem] top-8 h-96 w-96 rounded-full bg-sky/55 blur-3xl" />
         <div className="absolute bottom-[-12rem] left-[35%] h-96 w-96 rounded-full bg-[#ffcf6e]/25 blur-3xl" />
       </div>
 
@@ -38,7 +38,7 @@ export default function SignInPage() {
             </HapticLink>
             <HapticLink
               href="/app"
-              className="haptic flex h-14 items-center justify-center gap-3 rounded-[1.3rem] bg-[#87dcfb] text-base font-black shadow-sm"
+              className="haptic flex h-14 items-center justify-center gap-3 rounded-[1.3rem] bg-sky text-base font-black shadow-sm"
             >
               <Fingerprint size={20} />
               Open Float
@@ -48,7 +48,7 @@ export default function SignInPage() {
           <div className="mt-8 grid gap-3">
             {trustItems.map((item) => (
               <div key={item} className="flex items-center gap-3 rounded-[1.25rem] bg-white/70 p-3">
-                <span className="grid h-9 w-9 place-items-center rounded-full bg-[#c8e9ca]">
+                <span className="grid h-9 w-9 place-items-center rounded-full bg-mint">
                   <ShieldCheck size={16} />
                 </span>
                 <span className="text-sm font-black">{item}</span>
@@ -75,7 +75,7 @@ export default function SignInPage() {
           </div>
 
           <div className="phone-shell float-delay absolute right-8 top-28 w-[330px] rounded-[2.1rem] p-6">
-            <span className="grid h-13 w-13 place-items-center rounded-full bg-[#87dcfb]">
+            <span className="grid h-13 w-13 place-items-center rounded-full bg-sky">
               <Sparkles size={23} />
             </span>
             <h2 className="font-display display-kern mt-10 text-5xl font-black leading-none">A login screen that feels launch-ready.</h2>

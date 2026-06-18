@@ -1,6 +1,14 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { budgets, transactions } from "@/lib/finance-data";
+import {
+  budgetRooms,
+  cardStack,
+  liveFeed,
+  moneyMood,
+  subscriptionStack,
+  userProfile,
+} from "@/lib/spendpilot-data";
 import {
   Bot,
   CalendarClock,
@@ -11,15 +19,7 @@ import {
   TrendingDown,
   X,
 } from "lucide-react";
-import { budgets, transactions } from "@/lib/finance-data";
-import {
-  budgetRooms,
-  cardStack,
-  liveFeed,
-  moneyMood,
-  subscriptionStack,
-  userProfile,
-} from "@/lib/spendpilot-data";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 
 type AppView = "overview" | "activity" | "budgets" | "cards";
 
@@ -70,8 +70,8 @@ const promptsByView: Record<AppView, string[]> = {
 const moodCopy: Record<CompanionMood, { label: string; className: string; dot: string }> = {
   calm: {
     label: "Calm",
-    className: "bg-[#c8e9ca] text-ink",
-    dot: "bg-[#2b8f5a]",
+    className: "bg-mint text-ink",
+    dot: "bg-verdant",
   },
   watch: {
     label: "Watch",
@@ -81,7 +81,7 @@ const moodCopy: Record<CompanionMood, { label: string; className: string; dot: s
   urgent: {
     label: "Urgent",
     className: "bg-[#ff9a76] text-ink",
-    dot: "bg-[#ee5f56]",
+    dot: "bg-coral",
   },
 };
 
@@ -295,7 +295,7 @@ export function FloatingFinanceCompanion({ view }: { view: AppView }) {
         <button
           type="button"
           onClick={openCompanion}
-          className="finance-companion-closed-face grid h-full w-full place-items-center rounded-full bg-ink text-white"
+          className="finance-companion-closed-face grid h-full w-full place-items-center bg-ink text-white"
           aria-label="Open Float companion"
           aria-expanded={open}
         >
@@ -305,9 +305,9 @@ export function FloatingFinanceCompanion({ view }: { view: AppView }) {
           </span>
         </button>
 
-        <section className="finance-companion-open-face flex h-full min-w-[min(calc(100vw-1.5rem),420px)] flex-col overflow-hidden rounded-[1.8rem] border border-white/76 bg-white/88 text-ink shadow-[0_26px_90px_rgba(23,23,23,0.22)] backdrop-blur-2xl">
+        <section className="finance-companion-open-face flex h-full min-w-[min(calc(100vw-1.5rem),420px)] flex-col overflow-hidden border border-white/76 bg-white/88 text-ink shadow-[0_26px_90px_rgba(23,23,23,0.22)] backdrop-blur-2xl">
           <div className="relative shrink-0 overflow-hidden bg-ink p-4 text-white">
-            <div className="absolute -right-8 -top-8 h-28 w-28 rounded-full bg-[#87dcfb]/24" />
+            <div className="absolute -right-8 -top-8 h-28 w-28 rounded-full bg-sky/24" />
             <div className="absolute right-12 top-8 h-12 w-12 rounded-full bg-[#ffcf6e]/24" />
             <div className="relative flex items-center justify-between gap-3">
               <div className="flex min-w-0 items-center gap-3">
@@ -322,7 +322,7 @@ export function FloatingFinanceCompanion({ view }: { view: AppView }) {
               <button
                 type="button"
                 onClick={closeCompanion}
-                className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-white/15 bg-[#ee5f56] text-white shadow-[0_12px_34px_rgba(238,95,86,0.3)] transition hover:scale-105 hover:bg-[#ff746b] active:scale-95"
+                className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-white/15 bg-coral text-white shadow-[0_12px_34px_rgba(238,95,86,0.3)] transition hover:scale-105 hover:bg-[#ff746b] active:scale-95"
                 aria-label="Close companion"
               >
                 <X size={18} />
@@ -394,7 +394,7 @@ function MessageBubble({ message }: { message: CompanionMessage }) {
     <div className="mr-6 overflow-hidden rounded-[1.35rem] border border-ink/8 bg-white/76 shadow-sm">
       <div className="flex items-center justify-between gap-3 border-b border-ink/8 px-3 py-2">
         <div className="flex items-center gap-2">
-          <span className="grid h-8 w-8 place-items-center rounded-full bg-[#87dcfb] text-ink">
+          <span className="grid h-8 w-8 place-items-center rounded-full bg-sky text-ink">
             <Sparkles size={15} />
           </span>
           <span className="text-xs font-black text-ink/44">{message.confidence ?? "Based on context"}</span>
@@ -416,11 +416,11 @@ function MessageBubble({ message }: { message: CompanionMessage }) {
         {message.insights?.length ? (
           <div className="grid gap-2">
             {message.insights.map((insight, index) => (
-              <div key={`${insight}-${index}`} className="flex items-start gap-2 rounded-[1rem] bg-smoke px-3 py-2">
+              <div key={`${insight}-${index}`} className="flex items-start gap-2 rounded-2xl bg-smoke px-3 py-2">
                 {index % 2 === 0 ? (
-                  <ShieldCheck size={15} className="mt-0.5 shrink-0 text-[#2b8f5a]" />
+                  <ShieldCheck size={15} className="mt-0.5 shrink-0 text-verdant" />
                 ) : (
-                  <TrendingDown size={15} className="mt-0.5 shrink-0 text-[#ee5f56]" />
+                  <TrendingDown size={15} className="mt-0.5 shrink-0 text-coral" />
                 )}
                 <p className="text-xs font-bold leading-5 text-ink/58">{insight}</p>
               </div>
@@ -447,7 +447,7 @@ function OrganicThinking() {
   return (
     <div className="mr-10 overflow-hidden rounded-[1.25rem] border border-ink/8 bg-white/72 p-3 shadow-sm">
       <div className="flex items-center gap-3">
-        <span className="organic-blob grid h-10 w-10 place-items-center bg-[#87dcfb] text-ink">
+        <span className="organic-blob grid h-10 w-10 place-items-center bg-sky text-ink">
           <Sparkles size={16} />
         </span>
         <div className="min-w-0 flex-1">
@@ -464,8 +464,8 @@ function OrganicThinking() {
 
 function StreamingSkeleton({ confidence }: { confidence?: string }) {
   return (
-    <div className="flex items-center gap-3 rounded-[1rem] bg-smoke p-3">
-      <span className="organic-blob grid h-10 w-10 shrink-0 place-items-center bg-[#87dcfb] text-ink">
+    <div className="flex items-center gap-3 rounded-2xl bg-smoke p-3">
+      <span className="organic-blob grid h-10 w-10 shrink-0 place-items-center bg-sky text-ink">
         <Sparkles size={16} />
       </span>
       <div className="min-w-0 flex-1">
@@ -484,7 +484,7 @@ function GeneratedCards({ cards }: { cards: CompanionCard[] }) {
   return (
     <div className="grid gap-2 sm:grid-cols-2">
       {cards.map((card) => (
-        <div key={`${card.title}-${card.value}`} className={`finance-generated-card rounded-[1rem] p-3 ${cardTone(card.tone)}`}>
+        <div key={`${card.title}-${card.value}`} className={`finance-generated-card rounded-2xl p-3 ${cardTone(card.tone)}`}>
           <p className="text-[10px] font-black uppercase tracking-[0.14em] text-ink/45">{card.title}</p>
           <p className="mt-2 font-mono text-xl font-black leading-none tabular-nums">{card.value}</p>
           <p className="mt-2 text-xs font-bold leading-5 text-ink/58">{card.body}</p>
@@ -496,11 +496,11 @@ function GeneratedCards({ cards }: { cards: CompanionCard[] }) {
 
 function cardTone(tone: CompanionCard["tone"]) {
   if (tone === "mint") {
-    return "bg-[#c8e9ca]";
+    return "bg-mint";
   }
 
   if (tone === "sky") {
-    return "bg-[#87dcfb]";
+    return "bg-sky";
   }
 
   if (tone === "coral") {

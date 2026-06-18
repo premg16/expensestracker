@@ -1,3 +1,11 @@
+import { HapticLink } from "@/components/haptic-link";
+import { LandingInteractionShell } from "@/components/landing-interactions";
+import {
+  landingFeatures,
+  lifestyleImages,
+  testimonials,
+  trustSignals,
+} from "@/lib/spendpilot-data";
 import {
   ArrowRight,
   Check,
@@ -12,14 +20,6 @@ import {
   Zap,
 } from "lucide-react";
 import Image from "next/image";
-import { HapticLink } from "@/components/haptic-link";
-import { LandingInteractionShell } from "@/components/landing-interactions";
-import {
-  landingFeatures,
-  lifestyleImages,
-  testimonials,
-  trustSignals,
-} from "@/lib/spendpilot-data";
 
 const moneyNotes = [
   "rent already cleared",
@@ -46,6 +46,11 @@ const problemScenes = [
     title: "Five minutes a day, nothing more",
     body: "A short daily brief gives you the number, the changes, and the one next move that keeps money admin from becoming a second job.",
   },
+] as const;
+
+const problemTitleLines = [
+  ["A", "balance", "looks", "rich"],
+  ["until", "life", "takes", "its", "cut."],
 ] as const;
 
 export function LandingPage() {
@@ -156,7 +161,7 @@ function ProblemSection() {
     <section
       id="story"
       data-problem-scroll="true"
-      className="problem-story relative h-[520svh] scroll-mt-0"
+      className="problem-story relative h-[430svh] scroll-mt-0"
     >
       <div
         data-problem-stage="prelude"
@@ -166,9 +171,20 @@ function ProblemSection() {
         <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-linear-to-b from-white/22 to-transparent" />
         <div className="problem-story-inner relative mx-auto h-dvh max-w-7xl">
           <div className="problem-headline-lockup">
-            <p className="problem-eyebrow text-sm font-black uppercase text-ink/42">The actual problem</p>
-            <h2 className="problem-main-title font-display display-kern text-balance mt-4 font-black leading-none">
-              A balance looks rich until life takes its cut.
+            <p className="problem-eyebrow font-black uppercase">The actual problem</p>
+            <h2
+              className="problem-main-title font-display display-kern mt-4 font-black leading-none"
+              aria-label="A balance looks rich until life takes its cut."
+            >
+              {problemTitleLines.map((line, lineIndex) => (
+                <span key={line.join(" ")} className="problem-title-line" aria-hidden="true">
+                  {line.map((word) => (
+                    <span key={`${lineIndex}-${word}`} className="problem-title-word" data-problem-word>
+                      {word}
+                    </span>
+                  ))}
+                </span>
+              ))}
             </h2>
           </div>
 
@@ -190,92 +206,91 @@ function ProblemSection() {
           className="problem-phone cursor-reactive absolute w-full max-w-none"
         >
           <div className="problem-product-canvas relative min-h-[560px] overflow-hidden rounded-[2.35rem] border border-white/72 bg-[#e8f8fd]/78 p-5 shadow-[0_34px_100px_rgba(23,23,23,0.13)]">
-              <div className="problem-phone-grid" aria-hidden="true" />
+            <div className="problem-phone-grid" aria-hidden="true" />
 
-              <article className="problem-phone-scene problem-phone-scene-one">
-                <div className="relative z-10 rounded-[1.8rem] bg-ink p-5 text-white shadow-[0_26px_70px_rgba(23,23,23,0.25)]">
-                  <p className="text-xs font-black uppercase tracking-[0.18em] text-white/42">Bank balance says</p>
-                  <p className="money-figures mt-3 text-6xl font-black leading-none tracking-normal">$4,812</p>
-                  <div className="mt-4 h-1.5 rounded-full bg-white/12">
-                    <div className="problem-phone-bar h-full rounded-full bg-coral" />
+            <article className="problem-phone-scene problem-phone-scene-one">
+              <div className="relative z-10 rounded-[1.8rem] bg-ink p-5 text-white shadow-[0_26px_70px_rgba(23,23,23,0.25)]">
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-white/42">Bank balance says</p>
+                <p className="money-figures mt-3 text-6xl font-black leading-none tracking-normal">$4,812</p>
+                <div className="mt-4 h-1.5 rounded-full bg-white/12">
+                  <div className="problem-phone-bar h-full rounded-full bg-coral" />
+                </div>
+                <p className="mt-5 text-sm font-semibold leading-6 text-white/62">
+                  Looks useful until already-claimed money starts leaving the room.
+                </p>
+              </div>
+
+              <div className="relative z-10 mt-4 grid gap-3">
+                {[
+                  ["Rent already committed", "-$2,400"],
+                  ["Card closes Friday", "-$1,102"],
+                  ["Quiet renewals", "-$124"],
+                ].map(([label, amount]) => (
+                  <div key={label} className="problem-phone-row flex items-center justify-between rounded-[1.2rem] bg-white/82 px-4 py-3">
+                    <span className="text-sm font-black text-ink/68">{label}</span>
+                    <span className="money-figures text-lg font-black text-coral">{amount}</span>
                   </div>
-                  <p className="mt-5 text-sm font-semibold leading-6 text-white/62">
-                    Looks useful until already-claimed money starts leaving the room.
-                  </p>
-                </div>
+                ))}
+              </div>
+            </article>
 
-                <div className="relative z-10 mt-4 grid gap-3">
-                  {[
-                    ["Rent already committed", "-$2,400"],
-                    ["Card closes Friday", "-$1,102"],
-                    ["Quiet renewals", "-$124"],
-                  ].map(([label, amount]) => (
-                    <div key={label} className="problem-phone-row flex items-center justify-between rounded-[1.2rem] bg-white/82 px-4 py-3">
-                      <span className="text-sm font-black text-ink/68">{label}</span>
-                      <span className="money-figures text-lg font-black text-coral">{amount}</span>
-                    </div>
-                  ))}
-                </div>
-              </article>
-
-              <article className="problem-phone-scene problem-phone-scene-two">
-                <div className="relative z-10">
-                  <p className="text-xs font-black uppercase tracking-[0.18em] text-ink/42">What changed</p>
-                  <h3 className="font-display display-kern mt-2 text-5xl font-black leading-[0.95] text-ink">
-                    Spotify rose $2.
-                  </h3>
-                  <p className="mt-4 text-base font-semibold leading-7 text-ink/60">
-                    Float turns the change into a decision before the renewal hits next month.
-                  </p>
-                </div>
-                <div className="relative z-10 mt-7 grid gap-3">
-                  {[
-                    ["Keep", "still inside today"],
-                    ["Lower", "find cheaper plan"],
-                    ["Cancel", "save $14/mo"],
-                  ].map(([action, note], index) => (
-                    <div
-                      key={action}
-                      className={`problem-action-row flex items-center justify-between rounded-[1.35rem] border border-white/74 px-4 py-4 shadow-[0_14px_40px_rgba(23,23,23,0.08)] ${
-                        index === 2 ? "bg-ink text-white" : index === 1 ? "bg-mint/88 text-ink" : "bg-white/82 text-ink"
+            <article className="problem-phone-scene problem-phone-scene-two">
+              <div className="relative z-10">
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-ink/42">What changed</p>
+                <h3 className="font-display display-kern mt-2 text-5xl font-black leading-[0.95] text-ink">
+                  Spotify rose $2.
+                </h3>
+                <p className="mt-4 text-base font-semibold leading-7 text-ink/60">
+                  Float turns the change into a decision before the renewal hits next month.
+                </p>
+              </div>
+              <div className="relative z-10 mt-7 grid gap-3">
+                {[
+                  ["Keep", "still inside today"],
+                  ["Lower", "find cheaper plan"],
+                  ["Cancel", "save $14/mo"],
+                ].map(([action, note], index) => (
+                  <div
+                    key={action}
+                    className={`problem-action-row flex items-center justify-between rounded-[1.35rem] border border-white/74 px-4 py-4 shadow-[0_14px_40px_rgba(23,23,23,0.08)] ${index === 2 ? "bg-ink text-white" : index === 1 ? "bg-mint/88 text-ink" : "bg-white/82 text-ink"
                       }`}
-                    >
-                      <div>
-                        <p className="text-lg font-black">{action}</p>
-                        <p className={`text-sm font-semibold ${index === 2 ? "text-white/58" : "text-ink/50"}`}>{note}</p>
-                      </div>
-                      <ChevronRight size={18} />
+                  >
+                    <div>
+                      <p className="text-lg font-black">{action}</p>
+                      <p className={`text-sm font-semibold ${index === 2 ? "text-white/58" : "text-ink/50"}`}>{note}</p>
                     </div>
-                  ))}
-                </div>
-              </article>
+                    <ChevronRight size={18} />
+                  </div>
+                ))}
+              </div>
+            </article>
 
-              <article className="problem-phone-scene problem-phone-scene-three">
-                <div className="relative z-10 rounded-[1.9rem] bg-sky p-5 shadow-[0_24px_70px_rgba(47,191,233,0.24)]">
-                  <p className="text-xs font-black uppercase tracking-[0.18em] text-ink/42">Safe to spend today</p>
-                  <p className="money-figures mt-3 text-7xl font-black leading-none tracking-normal text-ink">$186</p>
-                  <p className="mt-4 text-base font-semibold leading-7 text-ink/62">
-                    After rent, cards, goals, groceries, and renewals have taken their share.
-                  </p>
+            <article className="problem-phone-scene problem-phone-scene-three">
+              <div className="relative z-10 rounded-[1.9rem] bg-sky p-5 shadow-[0_24px_70px_rgba(47,191,233,0.24)]">
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-ink/42">Safe to spend today</p>
+                <p className="money-figures mt-3 text-7xl font-black leading-none tracking-normal text-ink">$186</p>
+                <p className="mt-4 text-base font-semibold leading-7 text-ink/62">
+                  After rent, cards, goals, groceries, and renewals have taken their share.
+                </p>
+              </div>
+              <div className="relative z-10 mt-4 grid grid-cols-2 gap-3">
+                <div className="rounded-[1.35rem] bg-white/82 p-4">
+                  <p className="text-xs font-black uppercase tracking-[0.15em] text-ink/40">Recovered</p>
+                  <p className="money-figures mt-5 text-4xl font-black">$42</p>
+                  <p className="mt-1 text-sm font-semibold text-ink/50">this week</p>
                 </div>
-                <div className="relative z-10 mt-4 grid grid-cols-2 gap-3">
-                  <div className="rounded-[1.35rem] bg-white/82 p-4">
-                    <p className="text-xs font-black uppercase tracking-[0.15em] text-ink/40">Recovered</p>
-                    <p className="money-figures mt-5 text-4xl font-black">$42</p>
-                    <p className="mt-1 text-sm font-semibold text-ink/50">this week</p>
-                  </div>
-                  <div className="rounded-[1.35rem] bg-mint/90 p-4">
-                    <p className="text-xs font-black uppercase tracking-[0.15em] text-ink/40">Time spent</p>
-                    <p className="money-figures mt-5 text-4xl font-black">&lt; 5m</p>
-                    <p className="mt-1 text-sm font-semibold text-ink/50">daily check</p>
-                  </div>
+                <div className="rounded-[1.35rem] bg-mint/90 p-4">
+                  <p className="text-xs font-black uppercase tracking-[0.15em] text-ink/40">Time spent</p>
+                  <p className="money-figures mt-5 text-4xl font-black">&lt; 5m</p>
+                  <p className="mt-1 text-sm font-semibold text-ink/50">daily check</p>
                 </div>
-                <div className="problem-phone-stamp relative z-10 mt-4 grid h-20 w-20 place-items-center rounded-full bg-ink text-center text-xs font-black uppercase leading-4 text-white">
-                  actually
-                  <br />
-                  yours
-                </div>
-              </article>
+              </div>
+              <div className="problem-phone-stamp relative z-10 mt-4 grid h-20 w-20 place-items-center rounded-full bg-ink text-center text-xs font-black uppercase leading-4 text-white">
+                actually
+                <br />
+                yours
+              </div>
+            </article>
           </div>
         </div>
       </div>
@@ -308,9 +323,8 @@ function LifestyleSection() {
             <article
               key={image.src}
               data-cursor-card="true"
-              className={`cursor-reactive image-card group relative min-h-[520px] overflow-hidden rounded-[2.2rem] border border-white/70 bg-ink/8 shadow-[0_32px_90px_rgba(23,23,23,0.16)] ${
-                index === 1 ? "lg:mt-12" : ""
-              }`}
+              className={`cursor-reactive image-card group relative min-h-[520px] overflow-hidden rounded-[2.2rem] border border-white/70 bg-ink/8 shadow-[0_32px_90px_rgba(23,23,23,0.16)] ${index === 1 ? "lg:mt-12" : ""
+                }`}
               data-reveal={index === 0 ? "left" : index === 1 ? "center" : "right"}
               style={{ transitionDelay: `${index * 120}ms` }}
             >
@@ -321,7 +335,7 @@ function LifestyleSection() {
                 sizes="(min-width: 1024px) 33vw, 100vw"
                 className="object-cover transition duration-700 group-hover:scale-105"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-ink/78 via-ink/18 to-transparent" />
+              <div className="absolute inset-0 bg-linear-to-t from-ink/78 via-ink/18 to-transparent" />
               <div className="absolute inset-x-0 bottom-0 p-6 text-white">
                 <p className="inline-flex rounded-full bg-white/18 px-3 py-1 text-sm font-bold backdrop-blur-xl">
                   {image.label}
@@ -355,7 +369,7 @@ function FeatureSection() {
                   One feed. Three answers. No spreadsheet brain.
                 </h2>
               </div>
-              <span className="grid h-16 w-16 place-items-center rounded-full bg-[#87dcfb] text-ink">
+              <span className="grid h-16 w-16 place-items-center rounded-full bg-sky text-ink">
                 <Zap size={26} />
               </span>
             </div>
@@ -382,11 +396,11 @@ function FeatureSection() {
               <article
                 key={feature.title}
                 data-cursor-card="true"
-                className="cursor-reactive group rounded-[2rem] border border-white/75 bg-white/70 p-6 shadow-[0_24px_80px_rgba(23,23,23,0.10)] backdrop-blur-xl transition duration-300 hover:bg-white"
+                className="cursor-reactive group rounded-4xl border border-white/75 bg-white/70 p-6 shadow-[0_24px_80px_rgba(23,23,23,0.10)] backdrop-blur-xl transition duration-300 hover:bg-white"
                 data-reveal={index % 2 === 0 ? "right" : "center"}
                 style={{ transitionDelay: `${index * 90}ms` }}
               >
-                <span className="grid h-13 w-13 place-items-center rounded-full bg-[#87dcfb] transition duration-300 group-hover:rotate-6 group-hover:scale-110">
+                <span className="grid h-13 w-13 place-items-center rounded-full bg-sky transition duration-300 group-hover:rotate-6 group-hover:scale-110">
                   <feature.icon size={22} />
                 </span>
                 <h3 className="font-display display-kern mt-8 text-2xl font-black">{feature.title}</h3>
@@ -422,9 +436,8 @@ function SocialProofSection() {
                 <article
                   key={item.name}
                   data-cursor-card="true"
-                  className={`cursor-reactive flex min-h-[390px] flex-col justify-between rounded-[2rem] p-6 shadow-sm sm:p-7 lg:min-h-[440px] ${
-                    index === 0 ? "card-blue" : index === 1 ? "card-mint" : "card-black text-white"
-                  }`}
+                  className={`cursor-reactive flex min-h-[390px] flex-col justify-between rounded-4xl p-6 shadow-sm sm:p-7 lg:min-h-[440px] ${index === 0 ? "card-blue" : index === 1 ? "card-mint" : "card-black text-white"
+                    }`}
                   data-reveal={index === 0 ? "fan-left" : index === 1 ? "center" : "fan-right"}
                   style={{ transitionDelay: `${index * 110}ms` }}
                 >
@@ -459,7 +472,7 @@ function SecuritySection() {
           className="cursor-reactive card-black relative overflow-hidden rounded-[2.4rem] p-8 text-white"
           data-reveal="left"
         >
-          <AnimatedSpark className="absolute right-10 top-10 h-20 w-20 text-[#87dcfb]" />
+          <AnimatedSpark className="absolute right-10 top-10 h-20 w-20 text-sky" />
           <p className="text-sm font-black uppercase text-white/42">Trust layer</p>
           <h2 className="font-display display-kern text-balance mt-4 max-w-2xl text-6xl font-black leading-none max-sm:text-4xl">
             Playful interface. Serious money boundaries.
@@ -478,7 +491,7 @@ function SecuritySection() {
         </div>
 
         <div data-cursor-card="true" className="cursor-reactive glass-panel rounded-[2.4rem] p-8" data-reveal="right">
-          <div className="grid h-16 w-16 place-items-center rounded-full bg-[#c8e9ca]">
+          <div className="grid h-16 w-16 place-items-center rounded-full bg-mint">
             <Fingerprint size={26} />
           </div>
           <h3 className="font-display display-kern text-balance mt-10 text-5xl font-black leading-none max-sm:text-4xl">A money app that respects trust.</h3>
@@ -511,7 +524,7 @@ function FinalCta() {
     <section className="px-4 pb-10 pt-16 sm:px-6 lg:px-8">
       <div
         data-cursor-card="true"
-        className="cursor-reactive mx-auto overflow-hidden rounded-[2.8rem] bg-[#87dcfb] p-6 shadow-[0_34px_110px_rgba(23,23,23,0.18)] sm:p-10"
+        className="cursor-reactive mx-auto max-w-7xl overflow-hidden rounded-[2.8rem] bg-sky p-6 shadow-[0_34px_110px_rgba(23,23,23,0.18)] sm:p-10"
         data-reveal="cta"
       >
         <div className="relative grid gap-8 lg:grid-cols-[1fr_0.8fr] lg:items-center">
@@ -522,7 +535,7 @@ function FinalCta() {
               Open Float before the day spends itself.
             </h2>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-ink/68">
-              See what is safe, what changed, what needs review, and what can wait. That is the whole product.
+              See what is safe, what changed, what needs review, and what can wait.
             </p>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
@@ -551,9 +564,9 @@ function HeroAtmosphere() {
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden">
       <div className="absolute left-[-12rem] top-20 h-[34rem] w-[34rem] rounded-full bg-white/35 blur-3xl" />
-      <div className="absolute right-[-9rem] top-10 h-[30rem] w-[30rem] rounded-full bg-[#87dcfb]/55 blur-3xl" />
+      <div className="absolute right-[-9rem] top-10 h-[30rem] w-[30rem] rounded-full bg-sky/55 blur-3xl" />
       <div className="absolute bottom-[-14rem] left-[30%] h-[30rem] w-[30rem] rounded-full bg-[#ffcf6e]/25 blur-3xl" />
-      <AnimatedSpark className="absolute right-[8%] top-[12%] hidden h-24 w-24 text-[#87dcfb] lg:block" />
+      <AnimatedSpark className="absolute right-[8%] top-[12%] hidden h-24 w-24 text-sky lg:block" />
       <AnimatedLine className="absolute left-[9%] top-[25%] hidden h-28 w-56 text-ink lg:block" />
     </div>
   );
@@ -566,11 +579,11 @@ function HeroProductVisual() {
       className="hero-product-reveal cursor-reactive relative mx-auto -mt-2 hidden h-[610px] w-full max-w-[900px] self-center lg:block"
     >
       <div className="absolute left-1/2 top-10 h-[520px] w-[740px] -translate-x-1/2 rotate-[-1deg] rounded-[3rem] border border-white/70 bg-white/28 shadow-[0_34px_120px_rgba(23,23,23,0.10)]" />
-      <div className="absolute left-1/2 top-0 h-[560px] w-[760px] -translate-x-1/2 rounded-full bg-[#87dcfb]/30 blur-3xl" />
+      <div className="absolute left-1/2 top-0 h-[560px] w-[760px] -translate-x-1/2 rounded-full bg-sky/30 blur-3xl" />
 
       <div className="float-soft absolute inset-x-0 top-6 overflow-hidden rounded-[2.6rem] border border-white/75 bg-white/76 p-5 text-left shadow-[0_38px_120px_rgba(23,23,23,0.18)] backdrop-blur-2xl">
         <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
-          <section className="relative overflow-hidden rounded-[2rem] bg-ink p-6 text-white">
+          <section className="relative overflow-hidden rounded-4xl bg-ink p-6 text-white">
             <AnimatedLine className="absolute right-[-1.5rem] top-4 h-28 w-48 text-white/14" />
             <p className="text-xs font-black uppercase tracking-widest text-white/42">Spend permission</p>
             <div className="relative mt-8">
@@ -586,7 +599,7 @@ function HeroProductVisual() {
                 ["Goals", "$420", "#c8e9ca"],
                 ["Fun", "$186", "#ffcf6e"],
               ].map(([label, value, color]) => (
-                <div key={label} className="rounded-[1rem] bg-white/9 p-3">
+                <div key={label} className="rounded-2xl bg-white/9 p-3">
                   <span className="block h-1.5 w-8 rounded-full" style={{ background: color }} />
                   <p className="mt-4 text-[10px] font-black uppercase tracking-widest text-white/38">{label}</p>
                   <p className="money-figures mt-1 font-mono text-lg font-black">{value}</p>
@@ -596,7 +609,7 @@ function HeroProductVisual() {
           </section>
 
           <section className="grid gap-4">
-            <div className="rounded-[2rem] bg-[#ffcf6e] p-5 shadow-sm">
+            <div className="rounded-4xl bg-[#ffcf6e] p-5 shadow-sm">
               <p className="text-xs font-black uppercase tracking-widest text-ink/45">What changed</p>
               <h3 className="font-display display-kern mt-3 text-4xl font-black leading-none">Spotify rose $2.</h3>
               <p className="mt-3 text-sm leading-6 text-ink/58">
@@ -605,12 +618,12 @@ function HeroProductVisual() {
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div className="rounded-[1.7rem] bg-[#c8e9ca] p-5">
+              <div className="rounded-[1.7rem] bg-mint p-5">
                 <p className="text-xs font-black uppercase tracking-widest text-ink/42">Recovered</p>
                 <p className="money-figures mt-8 font-mono text-4xl font-black">$42</p>
                 <p className="mt-1 text-sm font-bold text-ink/52">this week</p>
               </div>
-              <div className="rounded-[1.7rem] bg-[#87dcfb] p-5">
+              <div className="rounded-[1.7rem] bg-sky p-5">
                 <p className="text-xs font-black uppercase tracking-widest text-ink/42">Time spent</p>
                 <p className="money-figures mt-8 font-mono text-4xl font-black">&lt; 5m</p>
                 <p className="mt-1 text-sm font-bold text-ink/52">daily check</p>
@@ -619,7 +632,7 @@ function HeroProductVisual() {
           </section>
         </div>
 
-        <section className="mt-4 grid gap-3 rounded-[2rem] bg-white/72 p-4 shadow-sm">
+        <section className="mt-4 grid gap-3 rounded-4xl bg-white/72 p-4 shadow-sm">
           {[
             ["Rent cleared", "Removed from today's spendable number", "current"],
             ["Trader Joe's on plan", "$84 groceries, still inside the room", "steady"],
@@ -640,7 +653,7 @@ function HeroProductVisual() {
       </div>
 
       <div className="float-delay absolute bottom-6 right-10 flex items-center gap-3 rounded-[1.4rem] bg-ink px-5 py-4 text-white shadow-[0_20px_70px_rgba(23,23,23,0.24)]">
-        <span className="grid h-11 w-11 place-items-center rounded-full bg-[#87dcfb] text-ink">
+        <span className="grid h-11 w-11 place-items-center rounded-full bg-sky text-ink">
           <Check size={18} />
         </span>
         <div>

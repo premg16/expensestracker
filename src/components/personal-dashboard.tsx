@@ -1,6 +1,16 @@
 "use client";
 
-import { useEffect, useRef, useState, type RefObject } from "react";
+import { FloatingFinanceCompanion } from "@/components/floating-finance-companion";
+import { HapticLink } from "@/components/haptic-link";
+import {
+  appNav,
+  budgetRooms,
+  cardStack,
+  challenges,
+  liveFeed,
+  subscriptionStack,
+  userProfile,
+} from "@/lib/spendpilot-data";
 import {
   ArrowDownLeft,
   ArrowRight,
@@ -29,17 +39,7 @@ import {
   WalletCards,
   Zap,
 } from "lucide-react";
-import { HapticLink } from "@/components/haptic-link";
-import { FloatingFinanceCompanion } from "@/components/floating-finance-companion";
-import {
-  appNav,
-  budgetRooms,
-  cardStack,
-  challenges,
-  liveFeed,
-  subscriptionStack,
-  userProfile,
-} from "@/lib/spendpilot-data";
+import { useEffect, useRef, useState, type RefObject } from "react";
 
 type AppView = "overview" | "activity" | "budgets" | "cards";
 type DashboardLoadPhase = "loading" | "revealing" | "ready";
@@ -79,9 +79,9 @@ const viewCopy: Record<AppView, DashboardCopy> = {
 };
 
 const moneyFlow = [
-  { label: "Income cleared", value: "$8,420", icon: Landmark, tone: "bg-[#c8e9ca] text-ink" },
+  { label: "Income cleared", value: "$8,420", icon: Landmark, tone: "bg-mint text-ink" },
   { label: "Fixed bills", value: "-$3,240", icon: ReceiptText, tone: "bg-[#ff9a76] text-ink" },
-  { label: "Goals reserved", value: "-$820", icon: PiggyBank, tone: "bg-[#87dcfb] text-ink" },
+  { label: "Goals reserved", value: "-$820", icon: PiggyBank, tone: "bg-sky text-ink" },
   { label: "Safe to spend", value: "$186", icon: BadgeDollarSign, tone: "bg-[#f9d85f] text-ink" },
 ];
 
@@ -203,13 +203,12 @@ export function PersonalDashboard({ view = "overview" }: { view?: AppView }) {
   useCursorReactiveCards(dashboardRef);
 
   return (
-    <main ref={dashboardRef} className="relative h-[100dvh] overflow-hidden text-ink">
+    <main ref={dashboardRef} className="relative h-dvh overflow-hidden text-ink">
       <DashboardRhythmBackground />
       <div className="relative z-10 h-full p-3 sm:p-4 lg:p-5">
         <div
-          className={`grid h-full gap-3 transition-[grid-template-columns] duration-500 ease-[cubic-bezier(.16,1,.3,1)] ${
-            sidebarOpen ? "lg:grid-cols-[248px_minmax(0,1fr)]" : "lg:grid-cols-[82px_minmax(0,1fr)]"
-          }`}
+          className={`grid h-full gap-3 transition-[grid-template-columns] duration-500 ease-[cubic-bezier(.16,1,.3,1)] ${sidebarOpen ? "lg:grid-cols-[248px_minmax(0,1fr)]" : "lg:grid-cols-[82px_minmax(0,1fr)]"
+            }`}
         >
           <AppSidebar view={view} collapsed={!sidebarOpen} onToggle={() => setSidebarOpen((open) => !open)} />
 
@@ -257,9 +256,8 @@ function DashboardContentStage({ view }: { view: AppView }) {
   return (
     <div className="relative min-h-full" aria-busy={phase !== "ready"}>
       <div
-        className={`mx-auto w-full max-w-[1440px] p-3 pb-24 transition-[opacity,transform,filter] duration-500 ease-[cubic-bezier(.16,1,.3,1)] sm:p-5 lg:pb-6 ${
-          contentVisible ? "translate-y-0 scale-100 opacity-100 blur-0" : "translate-y-3 scale-[0.992] opacity-0 blur-sm"
-        } ${phase === "revealing" ? "dashboard-page-transition" : ""}`}
+        className={`mx-auto w-full max-w-[1440px] p-3 pb-24 transition-[opacity,transform,filter] duration-500 ease-[cubic-bezier(.16,1,.3,1)] sm:p-5 lg:pb-6 ${contentVisible ? "translate-y-0 scale-100 opacity-100 blur-0" : "translate-y-3 scale-[0.992] opacity-0 blur-sm"
+          } ${phase === "revealing" ? "dashboard-page-transition" : ""}`}
       >
         {view === "overview" && <OverviewView />}
         {view === "activity" && <ActivityView />}
@@ -283,9 +281,8 @@ function AppSidebar({
 }) {
   return (
     <aside
-      className={`relative hidden h-full min-h-0 flex-col overflow-hidden rounded-[2rem] border border-white/70 bg-white/72 p-3 text-ink shadow-[0_28px_90px_rgba(23,23,23,0.12)] backdrop-blur-2xl transition-all duration-500 ease-[cubic-bezier(.16,1,.3,1)] lg:flex ${
-        collapsed ? "items-center" : "items-stretch"
-      }`}
+      className={`relative hidden h-full min-h-0 flex-col overflow-hidden rounded-4xl border border-white/70 bg-white/72 p-3 text-ink shadow-[0_28px_90px_rgba(23,23,23,0.12)] backdrop-blur-2xl transition-all duration-500 ease-[cubic-bezier(.16,1,.3,1)] lg:flex ${collapsed ? "items-center" : "items-stretch"
+        }`}
     >
       <div className={`border-b border-ink/8 pb-4 ${collapsed ? "grid place-items-center" : "flex items-center gap-3"}`}>
         <div className={`min-w-0 ${collapsed ? "grid place-items-center" : "flex items-center gap-3"}`}>
@@ -312,12 +309,10 @@ function AppSidebar({
               title={collapsed ? item.label : undefined}
               className={
                 collapsed
-                  ? `grid h-12 w-12 place-items-center rounded-full text-sm font-bold transition duration-300 hover:-translate-y-0.5 active:scale-95 ${
-                      active ? "bg-ink text-white shadow-[0_12px_30px_rgba(23,23,23,0.18)]" : "text-ink/45 hover:bg-white/76 hover:text-ink"
-                    }`
-                  : `group flex h-11 items-center gap-3 rounded-full px-3 text-sm font-bold transition duration-300 hover:translate-x-1 active:scale-[0.98] ${
-                      active ? "bg-ink text-white shadow-sm" : "text-ink/55 hover:bg-white/76 hover:text-ink"
-                    }`
+                  ? `grid h-12 w-12 place-items-center rounded-full text-sm font-bold transition duration-300 hover:-translate-y-0.5 active:scale-95 ${active ? "bg-ink text-white shadow-[0_12px_30px_rgba(23,23,23,0.18)]" : "text-ink/45 hover:bg-white/76 hover:text-ink"
+                  }`
+                  : `group flex h-11 items-center gap-3 rounded-full px-3 text-sm font-bold transition duration-300 hover:translate-x-1 active:scale-[0.98] ${active ? "bg-ink text-white shadow-sm" : "text-ink/55 hover:bg-white/76 hover:text-ink"
+                  }`
               }
             >
               <item.icon size={17} className="shrink-0 transition duration-300 group-hover:rotate-[-6deg]" />
@@ -334,9 +329,8 @@ function AppSidebar({
             {userProfile.name[0]}
           </span>
           <div
-            className={`min-w-0 flex-1 overflow-hidden transition-all duration-300 ${
-              collapsed ? "w-0 opacity-0" : "w-28 opacity-100"
-            }`}
+            className={`min-w-0 flex-1 overflow-hidden transition-all duration-300 ${collapsed ? "w-0 opacity-0" : "w-28 opacity-100"
+              }`}
           >
             <p className="truncate text-sm font-black leading-none">{userProfile.name}</p>
             <p className="mt-1 text-xs text-ink/42">{userProfile.plan}</p>
@@ -350,9 +344,8 @@ function AppSidebar({
         <button
           type="button"
           onClick={onToggle}
-          className={`haptic grid h-11 shrink-0 place-items-center rounded-full border border-ink/10 bg-white/72 text-sm font-black text-ink/62 shadow-sm transition duration-300 hover:bg-ink hover:text-white active:scale-95 ${
-            collapsed ? "mx-auto w-11" : "w-full grid-cols-[auto_1fr] gap-2 px-4"
-          }`}
+          className={`haptic grid h-11 shrink-0 place-items-center rounded-full border border-ink/10 bg-white/72 text-sm font-black text-ink/62 shadow-sm transition duration-300 hover:bg-ink hover:text-white active:scale-95 ${collapsed ? "mx-auto w-11" : "w-full grid-cols-[auto_1fr] gap-2 px-4"
+            }`}
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {collapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
@@ -401,9 +394,8 @@ function MobileNav({ view }: { view: AppView }) {
           <HapticLink
             key={item.href}
             href={item.href}
-            className={`flex min-h-14 flex-col items-center justify-center gap-1 rounded-lg px-1 text-[10px] font-black transition ${
-              active ? "bg-ink text-white" : "text-ink/52"
-            }`}
+            className={`flex min-h-14 flex-col items-center justify-center gap-1 rounded-lg px-1 text-[10px] font-black transition ${active ? "bg-ink text-white" : "text-ink/52"
+              }`}
           >
             <item.icon size={17} />
             <span className="truncate">{item.label}</span>
@@ -438,7 +430,7 @@ function OverviewLoadingLayout() {
           <div className="dashboard-loader-meter h-1 rounded-full bg-[linear-gradient(90deg,#87dcfb,#c8e9ca,#ffcf6e,#ff9a76)]" />
           <div className="mt-7 flex gap-2">
             <div className="h-7 w-20 rounded-full bg-white/12" />
-            <div className="h-7 w-32 rounded-full bg-[#c8e9ca]/80" />
+            <div className="h-7 w-32 rounded-full bg-mint/80" />
           </div>
           <div className="mt-10 h-4 w-36 rounded-full bg-white/16" />
           <div className="mt-4 h-20 w-56 rounded-[1.25rem] bg-white/12" />
@@ -451,7 +443,7 @@ function OverviewLoadingLayout() {
 
         <div className="dashboard-loader-step rounded-[2.35rem] bg-[#ffcf6e] p-5 shadow-[0_24px_80px_rgba(23,23,23,0.12)]">
           <div className="h-3 w-24 rounded-full bg-ink/14" />
-          <div className="mt-5 h-12 w-56 rounded-[1rem] bg-ink/10" />
+          <div className="mt-5 h-12 w-56 rounded-2xl bg-ink/10" />
           <div className="mt-4 h-4 w-64 max-w-full rounded-full bg-ink/10" />
           <div className="mt-7 grid grid-cols-2 gap-2">
             <div className="h-20 rounded-[1.25rem] bg-white/55" />
@@ -482,7 +474,7 @@ function OverviewLoadingLayout() {
 function ActivityLoadingLayout() {
   return (
     <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
-      <section className="dashboard-loader-step overflow-hidden rounded-[2rem] border border-white/75 bg-white/72 shadow-[0_24px_80px_rgba(23,23,23,0.10)]">
+      <section className="dashboard-loader-step overflow-hidden rounded-4xl border border-white/75 bg-white/72 shadow-[0_24px_80px_rgba(23,23,23,0.10)]">
         <div className="flex flex-col gap-3 border-b border-ink/8 p-4 md:flex-row md:items-center md:justify-between">
           <div className="h-8 w-44 rounded-[0.9rem] bg-ink/10" />
           <div className="flex flex-wrap gap-2">
@@ -504,9 +496,9 @@ function ActivityLoadingLayout() {
       </section>
 
       <aside className="space-y-4">
-        <section className="dashboard-loader-step card-black rounded-[2rem] p-4 text-white shadow-[0_34px_100px_rgba(23,23,23,0.20)]">
+        <section className="dashboard-loader-step card-black rounded-4xl p-4 text-white shadow-[0_34px_100px_rgba(23,23,23,0.20)]">
           <div className="flex items-center justify-between">
-            <div className="h-10 w-10 rounded-full bg-[#87dcfb]" />
+            <div className="h-10 w-10 rounded-full bg-sky" />
             <div className="h-7 w-24 rounded-full bg-white/10" />
           </div>
           <div className="mt-8 h-16 rounded-[1.25rem] bg-white/12" />
@@ -522,7 +514,7 @@ function ActivityLoadingLayout() {
 function BudgetsLoadingLayout() {
   return (
     <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
-      <section className="dashboard-loader-step rounded-[2rem] border border-white/75 bg-white/72 p-4 shadow-[0_24px_80px_rgba(23,23,23,0.10)]">
+      <section className="dashboard-loader-step rounded-4xl border border-white/75 bg-white/72 p-4 shadow-[0_24px_80px_rgba(23,23,23,0.10)]">
         <div className="flex flex-col gap-3 border-b border-ink/8 pb-4 md:flex-row md:items-end md:justify-between">
           <div className="h-8 w-72 max-w-full rounded-[0.9rem] bg-ink/10" />
           <div className="h-10 w-44 rounded-full border border-white/80 bg-white/70" />
@@ -535,7 +527,7 @@ function BudgetsLoadingLayout() {
       </section>
 
       <aside className="space-y-4">
-        <section className="dashboard-loader-step rounded-[2rem] bg-[#ffcf6e] p-5 shadow-[0_24px_80px_rgba(23,23,23,0.12)]">
+        <section className="dashboard-loader-step rounded-4xl bg-[#ffcf6e] p-5 shadow-[0_24px_80px_rgba(23,23,23,0.12)]">
           <div className="h-16 rounded-[1.25rem] bg-ink/10" />
           <div className="mt-4 h-4 w-full rounded-full bg-ink/10" />
           <div className="mt-2 h-4 w-4/5 rounded-full bg-ink/10" />
@@ -557,7 +549,7 @@ function CardsLoadingLayout() {
           ))}
         </section>
 
-        <section className="dashboard-loader-step overflow-hidden rounded-[2rem] border border-white/75 bg-white/72 shadow-[0_24px_80px_rgba(23,23,23,0.10)]">
+        <section className="dashboard-loader-step overflow-hidden rounded-4xl border border-white/75 bg-white/72 shadow-[0_24px_80px_rgba(23,23,23,0.10)]">
           <div className="flex flex-col gap-3 border-b border-ink/8 p-4 sm:flex-row sm:items-end sm:justify-between">
             <div className="h-8 w-64 max-w-full rounded-[0.9rem] bg-ink/10" />
             <div className="h-10 w-36 rounded-full border border-white/80 bg-white/70" />
@@ -572,8 +564,8 @@ function CardsLoadingLayout() {
 
       <aside className="space-y-4">
         <WhiteLoaderPanel rows={4} />
-        <section className="dashboard-loader-step card-black rounded-[2rem] p-5 text-white shadow-[0_34px_100px_rgba(23,23,23,0.20)]">
-          <div className="h-12 w-24 rounded-[1rem] bg-white/12" />
+        <section className="dashboard-loader-step card-black rounded-4xl p-5 text-white shadow-[0_34px_100px_rgba(23,23,23,0.20)]">
+          <div className="h-12 w-24 rounded-2xl bg-white/12" />
           <div className="mt-3 h-4 w-52 rounded-full bg-white/10" />
           <div className="mt-5 h-2 rounded-full bg-white/12">
             <div className="dashboard-loader-meter h-full w-[22%] rounded-full bg-[#8fd6a1]" />
@@ -598,7 +590,7 @@ function DarkLoaderTile() {
 
 function ColorLoaderCard({ color, width, delay }: { color: string; width: string; delay: number }) {
   return (
-    <div className="dashboard-loader-step rounded-[2rem] p-4 shadow-[0_24px_70px_rgba(23,23,23,0.10)]" style={{ backgroundColor: color, animationDelay: `${delay}ms` }}>
+    <div className="dashboard-loader-step rounded-4xl p-4 shadow-[0_24px_70px_rgba(23,23,23,0.10)]" style={{ backgroundColor: color, animationDelay: `${delay}ms` }}>
       <div className="h-11 w-11 rounded-full bg-white/50" />
       <div className="mt-8 h-5 w-44 rounded-full bg-ink/12" />
       <div className="mt-3 h-4 rounded-full bg-ink/10" style={{ width }} />
@@ -608,7 +600,7 @@ function ColorLoaderCard({ color, width, delay }: { color: string; width: string
 
 function WhiteLoaderPanel({ rows }: { rows: number }) {
   return (
-    <section className="dashboard-loader-step rounded-[2rem] border border-white/75 bg-white/72 p-4 shadow-[0_24px_80px_rgba(23,23,23,0.10)]">
+    <section className="dashboard-loader-step rounded-4xl border border-white/75 bg-white/72 p-4 shadow-[0_24px_80px_rgba(23,23,23,0.10)]">
       <div className="flex items-center justify-between gap-3">
         <div className="h-8 w-44 rounded-[0.9rem] bg-ink/10" />
         <div className="h-8 w-8 rounded-full bg-ink/8" />
@@ -617,7 +609,7 @@ function WhiteLoaderPanel({ rows }: { rows: number }) {
         {Array.from({ length: rows }).map((_, index) => (
           <div key={index} className="rounded-[1.25rem] border border-ink/6 bg-white/70 p-3 shadow-sm">
             <div className="flex items-center gap-3">
-              <div className={`h-9 w-9 rounded-full ${index % 3 === 0 ? "bg-[#87dcfb]" : index % 3 === 1 ? "bg-[#ffcf6e]" : "bg-[#c8e9ca]"}`} />
+              <div className={`h-9 w-9 rounded-full ${index % 3 === 0 ? "bg-sky" : index % 3 === 1 ? "bg-[#ffcf6e]" : "bg-mint"}`} />
               <div className="min-w-0 flex-1">
                 <div className="h-4 w-2/3 rounded-full bg-ink/10" />
                 <div className="mt-2 h-3 w-1/2 rounded-full bg-ink/8" />
@@ -633,7 +625,7 @@ function WhiteLoaderPanel({ rows }: { rows: number }) {
 function TransactionLoaderRow({ index }: { index: number }) {
   return (
     <div className="grid grid-cols-[auto_1fr_auto] gap-3 p-4 sm:grid-cols-[auto_minmax(0,1.4fr)_110px_92px] sm:items-center">
-      <div className={`h-10 w-10 rounded-full ${index % 3 === 0 ? "bg-[#87dcfb]" : index % 3 === 1 ? "bg-[#ffcf6e]" : "bg-[#c8e9ca]"}`} />
+      <div className={`h-10 w-10 rounded-full ${index % 3 === 0 ? "bg-sky" : index % 3 === 1 ? "bg-[#ffcf6e]" : "bg-mint"}`} />
       <div className="min-w-0">
         <div className="h-4 w-40 rounded-full bg-ink/10" />
         <div className="mt-2 h-3 w-28 rounded-full bg-ink/8" />
@@ -663,9 +655,9 @@ function BudgetLoaderRow({ index }: { index: number }) {
 }
 
 function MetricLoaderPanel({ index }: { index: number }) {
-  const tones = ["bg-[#c8e9ca]", "bg-[#87dcfb]", "bg-[#ff9a76]"];
+  const tones = ["bg-mint", "bg-sky", "bg-[#ff9a76]"];
   return (
-    <article className="dashboard-loader-step rounded-[2rem] border border-white/75 bg-white/72 p-4 shadow-[0_24px_80px_rgba(23,23,23,0.10)]">
+    <article className="dashboard-loader-step rounded-4xl border border-white/75 bg-white/72 p-4 shadow-[0_24px_80px_rgba(23,23,23,0.10)]">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="h-3 w-24 rounded-full bg-ink/10" />
@@ -710,7 +702,7 @@ function OverviewView() {
             <div>
               <div className="flex flex-wrap items-center gap-2">
                 <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-black text-white/70">June 18</span>
-                <span className="rounded-full bg-[#c8e9ca] px-3 py-1 text-xs font-black text-ink">Updated 8:42 AM</span>
+                <span className="rounded-full bg-mint px-3 py-1 text-xs font-black text-ink">Updated 8:42 AM</span>
               </div>
               <p className="mt-8 text-sm font-bold text-white/46">Safe to spend today</p>
               <div className="mt-2 flex flex-wrap items-end gap-x-4 gap-y-2">
@@ -750,7 +742,7 @@ function OverviewView() {
 function ActivityView() {
   return (
     <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
-      <section {...cursorCardProps} className="cursor-reactive min-w-0 overflow-hidden rounded-[2rem] border border-white/75 bg-white/72 shadow-[0_24px_80px_rgba(23,23,23,0.10)] backdrop-blur-xl">
+      <section {...cursorCardProps} className="cursor-reactive min-w-0 overflow-hidden rounded-4xl border border-white/75 bg-white/72 shadow-[0_24px_80px_rgba(23,23,23,0.10)] backdrop-blur-xl">
         <div className="flex flex-col gap-3 border-b border-ink/8 p-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h2 className="font-display display-kern text-2xl font-black">Latest activity</h2>
@@ -759,9 +751,8 @@ function ActivityView() {
             {activityFilters.map((filter, index) => (
               <button
                 key={filter}
-                className={`h-9 rounded-full px-3 text-xs font-black transition ${
-                  index === 0 ? "bg-ink text-white" : "border border-white/75 bg-white/66 text-ink/62 hover:border-ink hover:text-ink"
-                }`}
+                className={`h-9 rounded-full px-3 text-xs font-black transition ${index === 0 ? "bg-ink text-white" : "border border-white/75 bg-white/66 text-ink/62 hover:border-ink hover:text-ink"
+                  }`}
               >
                 {filter}
               </button>
@@ -782,9 +773,9 @@ function ActivityView() {
       </section>
 
       <aside className="space-y-4">
-        <section {...cursorCardProps} className="cursor-reactive card-black rounded-[2rem] p-4 text-white shadow-[0_34px_100px_rgba(23,23,23,0.20)]">
+        <section {...cursorCardProps} className="cursor-reactive card-black rounded-4xl p-4 text-white shadow-[0_34px_100px_rgba(23,23,23,0.20)]">
           <div className="flex items-center justify-between">
-            <span className="grid h-10 w-10 place-items-center rounded-full bg-[#87dcfb] text-ink">
+            <span className="grid h-10 w-10 place-items-center rounded-full bg-sky text-ink">
               <Zap size={18} />
             </span>
             <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-black text-white/56">48 active</span>
@@ -795,7 +786,7 @@ function ActivityView() {
           </p>
         </section>
 
-        <section {...cursorCardProps} className="cursor-reactive rounded-[2rem] border border-white/75 bg-white/72 p-4 shadow-[0_24px_80px_rgba(23,23,23,0.10)] backdrop-blur-xl">
+        <section {...cursorCardProps} className="cursor-reactive rounded-4xl border border-white/75 bg-white/72 p-4 shadow-[0_24px_80px_rgba(23,23,23,0.10)] backdrop-blur-xl">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="font-display display-kern text-2xl font-black">This week</h2>
@@ -805,7 +796,7 @@ function ActivityView() {
           <div className="mt-4 space-y-2">
             {["Spotify price increased", "Uber is 23% lower", "Trader Joe's on plan", "Payroll matched"].map((item, index) => (
               <div key={item} {...cursorCardProps} className="cursor-reactive flex items-center gap-3 rounded-[1.25rem] border border-ink/6 bg-white/70 p-3 shadow-sm">
-                <span className={`grid h-8 w-8 place-items-center rounded-full ${index === 0 ? "bg-[#ffcf6e] text-ink" : "bg-[#c8e9ca] text-ink"}`}>
+                <span className={`grid h-8 w-8 place-items-center rounded-full ${index === 0 ? "bg-[#ffcf6e] text-ink" : "bg-mint text-ink"}`}>
                   {index === 0 ? <TrendingUp size={15} /> : <Check size={15} />}
                 </span>
                 <p className="text-sm font-bold">{item}</p>
@@ -828,7 +819,7 @@ function BudgetsView() {
 
   return (
     <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
-      <section {...cursorCardProps} className="cursor-reactive rounded-[2rem] border border-white/75 bg-white/72 p-4 shadow-[0_24px_80px_rgba(23,23,23,0.10)] backdrop-blur-xl">
+      <section {...cursorCardProps} className="cursor-reactive rounded-4xl border border-white/75 bg-white/72 p-4 shadow-[0_24px_80px_rgba(23,23,23,0.10)] backdrop-blur-xl">
         <div className="flex flex-col gap-3 border-b border-ink/8 pb-4 md:flex-row md:items-end md:justify-between">
           <div>
             <h2 className="font-display display-kern text-2xl font-black">Budget pressure by category</h2>
@@ -847,7 +838,7 @@ function BudgetsView() {
       </section>
 
       <aside className="space-y-4">
-        <section {...cursorCardProps} className="cursor-reactive rounded-[2rem] bg-[#ffcf6e] p-5 shadow-[0_24px_80px_rgba(23,23,23,0.12)]">
+        <section {...cursorCardProps} className="cursor-reactive rounded-4xl bg-[#ffcf6e] p-5 shadow-[0_24px_80px_rgba(23,23,23,0.12)]">
           <h2 className="font-display display-kern text-3xl font-black leading-tight">Move $60 from shopping to food.</h2>
           <p className="mt-3 text-sm font-bold leading-6 text-ink/62">
             Weekend dinner plans are creating pressure. This keeps savings untouched and gives groceries more room.
@@ -858,7 +849,7 @@ function BudgetsView() {
           </button>
         </section>
 
-        <section {...cursorCardProps} className="cursor-reactive rounded-[2rem] border border-white/75 bg-white/72 p-4 shadow-[0_24px_80px_rgba(23,23,23,0.10)] backdrop-blur-xl">
+        <section {...cursorCardProps} className="cursor-reactive rounded-4xl border border-white/75 bg-white/72 p-4 shadow-[0_24px_80px_rgba(23,23,23,0.10)] backdrop-blur-xl">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="font-display display-kern text-2xl font-black">Active this week</h2>
@@ -871,7 +862,7 @@ function BudgetsView() {
                 <p className="text-sm font-black">{challenge.title}</p>
                 <div className="mt-2 flex items-center justify-between gap-3">
                   <span className="text-xs font-bold text-ink/48">{challenge.progress}</span>
-                  <span className="text-xs font-black text-[#2b8f5a]">{challenge.prize}</span>
+                  <span className="text-xs font-black text-verdant">{challenge.prize}</span>
                 </div>
               </div>
             ))}
@@ -892,7 +883,7 @@ function CardsView() {
           ))}
         </section>
 
-        <section {...cursorCardProps} className="cursor-reactive overflow-hidden rounded-[2rem] border border-white/75 bg-white/72 shadow-[0_24px_80px_rgba(23,23,23,0.10)] backdrop-blur-xl">
+        <section {...cursorCardProps} className="cursor-reactive overflow-hidden rounded-4xl border border-white/75 bg-white/72 shadow-[0_24px_80px_rgba(23,23,23,0.10)] backdrop-blur-xl">
           <div className="flex flex-col gap-3 border-b border-ink/8 p-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <h2 className="font-display display-kern text-2xl font-black">Balances and payment timing</h2>
@@ -911,7 +902,7 @@ function CardsView() {
       </div>
 
       <aside className="space-y-4">
-        <section {...cursorCardProps} className="cursor-reactive rounded-[2rem] border border-white/75 bg-white/72 p-4 shadow-[0_24px_80px_rgba(23,23,23,0.10)] backdrop-blur-xl">
+        <section {...cursorCardProps} className="cursor-reactive rounded-4xl border border-white/75 bg-white/72 p-4 shadow-[0_24px_80px_rgba(23,23,23,0.10)] backdrop-blur-xl">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="font-display display-kern text-2xl font-black">Subscriptions this month</h2>
@@ -925,7 +916,7 @@ function CardsView() {
           </div>
         </section>
 
-        <section {...cursorCardProps} className="cursor-reactive card-black rounded-[2rem] p-5 text-white shadow-[0_34px_100px_rgba(23,23,23,0.20)]">
+        <section {...cursorCardProps} className="cursor-reactive card-black rounded-4xl p-5 text-white shadow-[0_34px_100px_rgba(23,23,23,0.20)]">
           <h2 className="money-figures font-mono text-4xl font-black leading-none">22%</h2>
           <p className="mt-2 text-sm font-bold text-white/46">utilization across connected cards</p>
           <div className="mt-5 h-2 overflow-hidden rounded-full bg-white/12">
@@ -967,7 +958,7 @@ function SpendGauge({ percent, mounted }: { percent: number; mounted: boolean })
       </div>
       <div className="mt-4 grid grid-cols-3 gap-2 text-center">
         {["Payday", "Bills", "Close"].map((label, index) => (
-          <div key={label} className="rounded-[1rem] bg-white/8 px-2 py-2">
+          <div key={label} className="rounded-2xl bg-white/8 px-2 py-2">
             <p className="font-mono text-sm font-black">{index === 0 ? "12d" : index === 1 ? "5d" : "9d"}</p>
             <p className="mt-1 text-[10px] font-bold text-white/36">{label}</p>
           </div>
@@ -1008,14 +999,14 @@ function SpendFitCard() {
 function PlayfulActionCard({ item, index }: { item: (typeof actionQueue)[number]; index: number }) {
   const styles = [
     "bg-[#ff9a76]",
-    "bg-[#87dcfb]",
-    "bg-[#c8e9ca]",
+    "bg-sky",
+    "bg-mint",
   ];
   const icons = [Bell, PiggyBank, ShieldCheck];
   const Icon = icons[index % icons.length];
 
   return (
-    <article {...cursorCardProps} className={`cursor-reactive relative overflow-hidden rounded-[2rem] p-4 shadow-[0_24px_70px_rgba(23,23,23,0.12)] ${styles[index % styles.length]}`}>
+    <article {...cursorCardProps} className={`cursor-reactive relative overflow-hidden rounded-4xl p-4 shadow-[0_24px_70px_rgba(23,23,23,0.12)] ${styles[index % styles.length]}`}>
       <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-white/28" />
       <div className="relative flex min-h-40 flex-col">
         <span className="grid h-11 w-11 place-items-center rounded-full bg-white/70 text-ink shadow-sm">
@@ -1033,10 +1024,10 @@ function PlayfulActionCard({ item, index }: { item: (typeof actionQueue)[number]
 }
 
 function MetricPanel({ item, index }: { item: { label: string; value: string; detail: string }; index: number }) {
-  const tones = ["bg-[#c8e9ca]", "bg-[#87dcfb]", "bg-[#ff9a76]"];
+  const tones = ["bg-mint", "bg-sky", "bg-[#ff9a76]"];
 
   return (
-    <article {...cursorCardProps} className="cursor-reactive rounded-[2rem] border border-white/75 bg-white/72 p-4 shadow-[0_24px_80px_rgba(23,23,23,0.10)] backdrop-blur-xl">
+    <article {...cursorCardProps} className="cursor-reactive rounded-4xl border border-white/75 bg-white/72 p-4 shadow-[0_24px_80px_rgba(23,23,23,0.10)] backdrop-blur-xl">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-[10px] font-black uppercase tracking-[0.18em] text-ink/42">{item.label}</p>
@@ -1053,7 +1044,7 @@ function MetricPanel({ item, index }: { item: { label: string; value: string; de
 
 function BudgetPressure({ mounted }: { mounted: boolean }) {
   return (
-    <section {...cursorCardProps} className="cursor-reactive rounded-[2rem] border border-white/75 bg-white/72 p-4 shadow-[0_24px_80px_rgba(23,23,23,0.10)] backdrop-blur-xl">
+    <section {...cursorCardProps} className="cursor-reactive rounded-4xl border border-white/75 bg-white/72 p-4 shadow-[0_24px_80px_rgba(23,23,23,0.10)] backdrop-blur-xl">
       <div className="flex items-center justify-between gap-3">
         <div>
           <h2 className="font-display display-kern text-2xl font-black">Categories to watch</h2>
@@ -1090,7 +1081,7 @@ function BudgetMini({
           <p className="text-sm font-black">{room.name}</p>
           <p className="mt-1 text-xs font-bold text-ink/48">{room.spent} of {room.limit}</p>
         </div>
-        <span className={`rounded-full px-2 py-1 text-xs font-black ${room.percent > 80 ? "bg-[#ffcf6e] text-ink" : "bg-[#c8e9ca] text-ink"}`}>
+        <span className={`rounded-full px-2 py-1 text-xs font-black ${room.percent > 80 ? "bg-[#ffcf6e] text-ink" : "bg-mint text-ink"}`}>
           {room.percent}%
         </span>
       </div>
@@ -1103,7 +1094,7 @@ function BudgetMini({
 
 function FeedPreview() {
   return (
-    <section {...cursorCardProps} className="cursor-reactive overflow-hidden rounded-[2rem] border border-white/75 bg-white/72 shadow-[0_24px_80px_rgba(23,23,23,0.10)] backdrop-blur-xl">
+    <section {...cursorCardProps} className="cursor-reactive overflow-hidden rounded-4xl border border-white/75 bg-white/72 shadow-[0_24px_80px_rgba(23,23,23,0.10)] backdrop-blur-xl">
       <div className="flex items-center justify-between border-b border-ink/8 p-4">
         <div>
           <h2 className="font-display display-kern text-2xl font-black">Latest moves</h2>
@@ -1151,7 +1142,7 @@ function TransactionRow({
         </span>
       )}
       <div className="text-right">
-        <p className={`font-mono text-sm font-black tabular-nums ${isIncome ? "text-[#2b8f5a]" : "text-ink"}`}>{item.amount}</p>
+        <p className={`font-mono text-sm font-black tabular-nums ${isIncome ? "text-verdant" : "text-ink"}`}>{item.amount}</p>
         {!compact && <p className="mt-1 text-[10px] font-bold text-ink/36">#{index + 1}</p>}
       </div>
     </div>
@@ -1175,7 +1166,7 @@ function BudgetRow({
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
           <h3 className="text-base font-black">{room.name}</h3>
-          <span className={`rounded-full px-2 py-1 text-xs font-black ${state === "Tight" ? "bg-[#ff9a76] text-ink" : state === "Watch" ? "bg-[#ffcf6e] text-ink" : "bg-[#c8e9ca] text-ink"}`}>
+          <span className={`rounded-full px-2 py-1 text-xs font-black ${state === "Tight" ? "bg-[#ff9a76] text-ink" : state === "Watch" ? "bg-[#ffcf6e] text-ink" : "bg-mint text-ink"}`}>
             {state}
           </span>
         </div>
@@ -1230,7 +1221,7 @@ function SubscriptionRow({ subscription }: { subscription: (typeof subscriptionS
       </div>
       <div className="text-right">
         <p className="font-mono text-sm font-black">{subscription.price}</p>
-        <button className={`mt-2 rounded-full px-3 py-1 text-xs font-black ${risky ? "bg-[#ffcf6e] text-ink" : "bg-[#c8e9ca] text-ink"}`}>
+        <button className={`mt-2 rounded-full px-3 py-1 text-xs font-black ${risky ? "bg-[#ffcf6e] text-ink" : "bg-mint text-ink"}`}>
           {subscription.action}
         </button>
       </div>
@@ -1239,12 +1230,12 @@ function SubscriptionRow({ subscription }: { subscription: (typeof subscriptionS
 }
 
 function budgetColor(index: number) {
-  return ["bg-[#87dcfb]", "bg-[#ffcf6e]", "bg-[#ff9a76]", "bg-[#c8e9ca]"][index % 4];
+  return ["bg-sky", "bg-[#ffcf6e]", "bg-[#ff9a76]", "bg-mint"][index % 4];
 }
 
 function transactionTone(tone: string) {
   if (tone === "good") {
-    return "bg-[#c8e9ca] text-ink";
+    return "bg-mint text-ink";
   }
 
   if (tone === "warn") {
@@ -1255,5 +1246,5 @@ function transactionTone(tone: string) {
     return "bg-[#ff9a76] text-ink";
   }
 
-  return "bg-[#87dcfb] text-ink";
+  return "bg-sky text-ink";
 }
