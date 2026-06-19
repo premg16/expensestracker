@@ -879,10 +879,12 @@ a {
 
 .social-highlight-green {
   color: #c8e9ca;
+  text-shadow: 0 0.045em 0 #171717;
 }
 
 .social-highlight-yellow {
   color: #ffcf6e;
+  text-shadow: 0 0.045em 0 #171717;
 }
 
 .social-proof-stage[data-social-stage="dock"] .social-headline-lockup,
