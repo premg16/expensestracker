@@ -382,7 +382,7 @@ export function FloatingFinanceCompanion({ view }: { view: AppView }) {
 function MessageBubble({ message }: { message: CompanionMessage }) {
   if (message.role === "user") {
     return (
-      <div className="ml-10 rounded-[1.25rem] bg-ink px-3 py-2 text-sm font-bold leading-6 text-white shadow-[0_14px_40px_rgba(23,23,23,0.14)]">
+      <div className="finance-message-bubble ml-10 rounded-[1.25rem] bg-ink px-3 py-2 text-sm font-bold leading-6 text-white shadow-[0_14px_40px_rgba(23,23,23,0.14)]">
         {message.text}
       </div>
     );
@@ -391,7 +391,7 @@ function MessageBubble({ message }: { message: CompanionMessage }) {
   const mood = message.mood ? moodCopy[message.mood] : moodCopy.watch;
 
   return (
-    <div className="mr-6 overflow-hidden rounded-[1.35rem] border border-ink/8 bg-white/76 shadow-sm">
+    <div className="finance-message-bubble mr-6 overflow-hidden rounded-[1.35rem] border border-ink/8 bg-white/76 shadow-sm">
       <div className="flex items-center justify-between gap-3 border-b border-ink/8 px-3 py-2">
         <div className="flex items-center gap-2">
           <span className="grid h-8 w-8 place-items-center rounded-full bg-sky text-ink">
@@ -445,7 +445,7 @@ function MessageBubble({ message }: { message: CompanionMessage }) {
 
 function OrganicThinking() {
   return (
-    <div className="mr-10 overflow-hidden rounded-[1.25rem] border border-ink/8 bg-white/72 p-3 shadow-sm">
+    <div className="finance-message-bubble mr-10 overflow-hidden rounded-[1.25rem] border border-ink/8 bg-white/72 p-3 shadow-sm">
       <div className="flex items-center gap-3">
         <span className="organic-blob grid h-10 w-10 place-items-center bg-sky text-ink">
           <Sparkles size={16} />

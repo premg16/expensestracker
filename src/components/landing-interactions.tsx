@@ -8,6 +8,10 @@ export function LandingInteractionShell({ children }: { children: ReactNode }) {
   useLandingReveals(rootRef);
   useHeaderScroll(rootRef);
   useProblemScroll(rootRef);
+  useQuestionScroll(rootRef);
+  useBriefScroll(rootRef);
+  useSocialProofScroll(rootRef);
+  useTrustScroll(rootRef);
   useLandingCursor(rootRef);
 
   return (
@@ -167,6 +171,404 @@ function useProblemScroll(rootRef: RefObject<HTMLElement | null>) {
       stage.style.setProperty("--problem-title-progress", titleProgress.toFixed(4));
       stage.style.setProperty("--problem-dock-progress", dockProgress.toFixed(4));
       stage.style.setProperty("--problem-content-progress", contentProgress.toFixed(4));
+      titleWords.forEach((word, index) => {
+        const wordStart = titleWords.length <= 1 ? 0 : (index / (titleWords.length - 1)) * 0.7;
+        const wordProgress = clamp((titleProgress - wordStart) / 0.24);
+
+        word.style.setProperty("--word-progress", wordProgress.toFixed(4));
+      });
+    };
+
+    const requestUpdate = () => {
+      if (frame) {
+        return;
+      }
+      frame = window.requestAnimationFrame(update);
+    };
+
+    update();
+    window.addEventListener("scroll", requestUpdate, { passive: true });
+    window.addEventListener("resize", requestUpdate);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", requestUpdate);
+      window.removeEventListener("resize", requestUpdate);
+    };
+  }, [rootRef]);
+}
+
+function useQuestionScroll(rootRef: RefObject<HTMLElement | null>) {
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) {
+      return;
+    }
+
+    const section = root.querySelector<HTMLElement>("[data-question-scroll='true']");
+    const stage = section?.querySelector<HTMLElement>("[data-question-stage]");
+    const titleWords = Array.from(section?.querySelectorAll<HTMLElement>("[data-question-word]") ?? []);
+    if (!section || !stage) {
+      return;
+    }
+
+    const clamp = (value: number) => Math.max(0, Math.min(1, value));
+    const range = (value: number, start: number, end: number) => clamp((value - start) / (end - start));
+
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (reduceMotion.matches) {
+      stage.dataset.questionStage = "question-3";
+      stage.dataset.questionStep = "2";
+      stage.style.setProperty("--question-progress", "1");
+      stage.style.setProperty("--question-eyebrow-progress", "1");
+      stage.style.setProperty("--question-intro-progress", "1");
+      stage.style.setProperty("--question-title-progress", "1");
+      stage.style.setProperty("--question-dock-progress", "1");
+      stage.style.setProperty("--question-board-progress", "1");
+      stage.style.setProperty("--question-content-progress", "1");
+      titleWords.forEach((word) => word.style.setProperty("--word-progress", "1"));
+      return;
+    }
+
+    let frame = 0;
+
+    const getStage = (progress: number) => {
+      if (progress < 0.08) {
+        return { stageName: "prelude", step: "-1" };
+      }
+      if (progress < 0.42) {
+        return { stageName: "title", step: "-1" };
+      }
+      if (progress < 0.56) {
+        return { stageName: "dock", step: "-1" };
+      }
+      if (progress < 0.72) {
+        return { stageName: "question-1", step: "0" };
+      }
+      if (progress < 0.86) {
+        return { stageName: "question-2", step: "1" };
+      }
+      return { stageName: "question-3", step: "2" };
+    };
+
+    const update = () => {
+      frame = 0;
+      const rect = section.getBoundingClientRect();
+      const scrollable = Math.max(1, rect.height - window.innerHeight);
+      const progress = Math.max(0, Math.min(1, -rect.top / scrollable));
+      const { stageName, step } = getStage(progress);
+      const eyebrowProgress = range(progress, 0, 0.18);
+      const titleProgress = range(progress, 0.08, 0.4);
+      const dockProgress = range(progress, 0.42, 0.56);
+      const boardProgress = range(progress, 0.42, 0.56);
+      const contentProgress = range(progress, 0.52, 1);
+
+      stage.dataset.questionStage = stageName;
+      stage.dataset.questionStep = step;
+      stage.style.setProperty("--question-progress", progress.toFixed(4));
+      stage.style.setProperty("--question-eyebrow-progress", eyebrowProgress.toFixed(4));
+      stage.style.setProperty("--question-intro-progress", eyebrowProgress.toFixed(4));
+      stage.style.setProperty("--question-title-progress", titleProgress.toFixed(4));
+      stage.style.setProperty("--question-dock-progress", dockProgress.toFixed(4));
+      stage.style.setProperty("--question-board-progress", boardProgress.toFixed(4));
+      stage.style.setProperty("--question-content-progress", contentProgress.toFixed(4));
+      titleWords.forEach((word, index) => {
+        const wordStart = titleWords.length <= 1 ? 0 : (index / (titleWords.length - 1)) * 0.7;
+        const wordProgress = clamp((titleProgress - wordStart) / 0.24);
+
+        word.style.setProperty("--word-progress", wordProgress.toFixed(4));
+      });
+    };
+
+    const requestUpdate = () => {
+      if (frame) {
+        return;
+      }
+      frame = window.requestAnimationFrame(update);
+    };
+
+    update();
+    window.addEventListener("scroll", requestUpdate, { passive: true });
+    window.addEventListener("resize", requestUpdate);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", requestUpdate);
+      window.removeEventListener("resize", requestUpdate);
+    };
+  }, [rootRef]);
+}
+
+function useBriefScroll(rootRef: RefObject<HTMLElement | null>) {
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) {
+      return;
+    }
+
+    const section = root.querySelector<HTMLElement>("[data-brief-scroll='true']");
+    const stage = section?.querySelector<HTMLElement>("[data-brief-stage]");
+    const titleWords = Array.from(section?.querySelectorAll<HTMLElement>("[data-brief-word]") ?? []);
+    if (!section || !stage) {
+      return;
+    }
+
+    const clamp = (value: number) => Math.max(0, Math.min(1, value));
+    const range = (value: number, start: number, end: number) => clamp((value - start) / (end - start));
+
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (reduceMotion.matches) {
+      stage.dataset.briefStage = "brief-4";
+      stage.dataset.briefStep = "3";
+      stage.style.setProperty("--brief-progress", "1");
+      stage.style.setProperty("--brief-eyebrow-progress", "1");
+      stage.style.setProperty("--brief-title-progress", "1");
+      stage.style.setProperty("--brief-dock-progress", "1");
+      stage.style.setProperty("--brief-board-progress", "1");
+      stage.style.setProperty("--brief-content-progress", "1");
+      titleWords.forEach((word) => word.style.setProperty("--word-progress", "1"));
+      return;
+    }
+
+    let frame = 0;
+
+    const getStage = (progress: number) => {
+      if (progress < 0.08) {
+        return { stageName: "prelude", step: "-1" };
+      }
+      if (progress < 0.34) {
+        return { stageName: "title", step: "-1" };
+      }
+      if (progress < 0.48) {
+        return { stageName: "dock", step: "-1" };
+      }
+      if (progress < 0.62) {
+        return { stageName: "brief-1", step: "0" };
+      }
+      if (progress < 0.76) {
+        return { stageName: "brief-2", step: "1" };
+      }
+      if (progress < 0.9) {
+        return { stageName: "brief-3", step: "2" };
+      }
+      return { stageName: "brief-4", step: "3" };
+    };
+
+    const update = () => {
+      frame = 0;
+      const rect = section.getBoundingClientRect();
+      const scrollable = Math.max(1, rect.height - window.innerHeight);
+      const progress = Math.max(0, Math.min(1, -rect.top / scrollable));
+      const { stageName, step } = getStage(progress);
+      const eyebrowProgress = range(progress, 0, 0.16);
+      const titleProgress = range(progress, 0.08, 0.32);
+      const dockProgress = range(progress, 0.36, 0.5);
+      const boardProgress = range(progress, 0.36, 0.5);
+      const contentProgress = range(progress, 0.48, 1);
+
+      stage.dataset.briefStage = stageName;
+      stage.dataset.briefStep = step;
+      stage.style.setProperty("--brief-progress", progress.toFixed(4));
+      stage.style.setProperty("--brief-eyebrow-progress", eyebrowProgress.toFixed(4));
+      stage.style.setProperty("--brief-title-progress", titleProgress.toFixed(4));
+      stage.style.setProperty("--brief-dock-progress", dockProgress.toFixed(4));
+      stage.style.setProperty("--brief-board-progress", boardProgress.toFixed(4));
+      stage.style.setProperty("--brief-content-progress", contentProgress.toFixed(4));
+      titleWords.forEach((word, index) => {
+        const wordStart = titleWords.length <= 1 ? 0 : (index / (titleWords.length - 1)) * 0.7;
+        const wordProgress = clamp((titleProgress - wordStart) / 0.24);
+
+        word.style.setProperty("--word-progress", wordProgress.toFixed(4));
+      });
+    };
+
+    const requestUpdate = () => {
+      if (frame) {
+        return;
+      }
+      frame = window.requestAnimationFrame(update);
+    };
+
+    update();
+    window.addEventListener("scroll", requestUpdate, { passive: true });
+    window.addEventListener("resize", requestUpdate);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", requestUpdate);
+      window.removeEventListener("resize", requestUpdate);
+    };
+  }, [rootRef]);
+}
+
+function useSocialProofScroll(rootRef: RefObject<HTMLElement | null>) {
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) {
+      return;
+    }
+
+    const section = root.querySelector<HTMLElement>("[data-social-scroll='true']");
+    const stage = section?.querySelector<HTMLElement>("[data-social-stage]");
+    const titleWords = Array.from(section?.querySelectorAll<HTMLElement>("[data-social-word]") ?? []);
+    if (!section || !stage) {
+      return;
+    }
+
+    const clamp = (value: number) => Math.max(0, Math.min(1, value));
+    const range = (value: number, start: number, end: number) => clamp((value - start) / (end - start));
+
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (reduceMotion.matches) {
+      stage.dataset.socialStage = "proof-3";
+      stage.dataset.socialStep = "2";
+      stage.style.setProperty("--social-progress", "1");
+      stage.style.setProperty("--social-eyebrow-progress", "1");
+      stage.style.setProperty("--social-title-progress", "1");
+      stage.style.setProperty("--social-dock-progress", "1");
+      stage.style.setProperty("--social-card-progress", "1");
+      titleWords.forEach((word) => word.style.setProperty("--word-progress", "1"));
+      return;
+    }
+
+    let frame = 0;
+
+    const getStage = (progress: number) => {
+      if (progress < 0.08) {
+        return { stageName: "prelude", step: "-1" };
+      }
+      if (progress < 0.42) {
+        return { stageName: "title", step: "-1" };
+      }
+      if (progress < 0.56) {
+        return { stageName: "dock", step: "-1" };
+      }
+      if (progress < 0.72) {
+        return { stageName: "proof-1", step: "0" };
+      }
+      if (progress < 0.86) {
+        return { stageName: "proof-2", step: "1" };
+      }
+      return { stageName: "proof-3", step: "2" };
+    };
+
+    const update = () => {
+      frame = 0;
+      const rect = section.getBoundingClientRect();
+      const scrollable = Math.max(1, rect.height - window.innerHeight);
+      const progress = Math.max(0, Math.min(1, -rect.top / scrollable));
+      const { stageName, step } = getStage(progress);
+      const eyebrowProgress = range(progress, 0, 0.18);
+      const titleProgress = range(progress, 0.08, 0.4);
+      const dockProgress = range(progress, 0.42, 0.56);
+      const cardProgress = range(progress, 0.52, 1);
+
+      stage.dataset.socialStage = stageName;
+      stage.dataset.socialStep = step;
+      stage.style.setProperty("--social-progress", progress.toFixed(4));
+      stage.style.setProperty("--social-eyebrow-progress", eyebrowProgress.toFixed(4));
+      stage.style.setProperty("--social-title-progress", titleProgress.toFixed(4));
+      stage.style.setProperty("--social-dock-progress", dockProgress.toFixed(4));
+      stage.style.setProperty("--social-card-progress", cardProgress.toFixed(4));
+      titleWords.forEach((word, index) => {
+        const wordStart = index % 3 === 0 ? 0 : index % 3 === 1 ? 0.04 : 0.08;
+        const wordProgress = clamp((titleProgress - wordStart) / 0.18);
+
+        word.style.setProperty("--word-progress", wordProgress.toFixed(4));
+      });
+    };
+
+    const requestUpdate = () => {
+      if (frame) {
+        return;
+      }
+      frame = window.requestAnimationFrame(update);
+    };
+
+    update();
+    window.addEventListener("scroll", requestUpdate, { passive: true });
+    window.addEventListener("resize", requestUpdate);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", requestUpdate);
+      window.removeEventListener("resize", requestUpdate);
+    };
+  }, [rootRef]);
+}
+
+function useTrustScroll(rootRef: RefObject<HTMLElement | null>) {
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) {
+      return;
+    }
+
+    const section = root.querySelector<HTMLElement>("[data-trust-scroll='true']");
+    const stage = section?.querySelector<HTMLElement>("[data-trust-stage]");
+    const titleWords = Array.from(section?.querySelectorAll<HTMLElement>("[data-trust-word]") ?? []);
+    if (!section || !stage) {
+      return;
+    }
+
+    const clamp = (value: number) => Math.max(0, Math.min(1, value));
+    const range = (value: number, start: number, end: number) => clamp((value - start) / (end - start));
+
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (reduceMotion.matches) {
+      stage.dataset.trustStage = "trust-3";
+      stage.dataset.trustStep = "2";
+      stage.style.setProperty("--trust-progress", "1");
+      stage.style.setProperty("--trust-eyebrow-progress", "1");
+      stage.style.setProperty("--trust-title-progress", "1");
+      stage.style.setProperty("--trust-dock-progress", "1");
+      stage.style.setProperty("--trust-board-progress", "1");
+      stage.style.setProperty("--trust-content-progress", "1");
+      titleWords.forEach((word) => word.style.setProperty("--word-progress", "1"));
+      return;
+    }
+
+    let frame = 0;
+
+    const getStage = (progress: number) => {
+      if (progress < 0.08) {
+        return { stageName: "prelude", step: "-1" };
+      }
+      if (progress < 0.42) {
+        return { stageName: "title", step: "-1" };
+      }
+      if (progress < 0.56) {
+        return { stageName: "dock", step: "-1" };
+      }
+      if (progress < 0.72) {
+        return { stageName: "trust-1", step: "0" };
+      }
+      if (progress < 0.86) {
+        return { stageName: "trust-2", step: "1" };
+      }
+      return { stageName: "trust-3", step: "2" };
+    };
+
+    const update = () => {
+      frame = 0;
+      const rect = section.getBoundingClientRect();
+      const scrollable = Math.max(1, rect.height - window.innerHeight);
+      const progress = Math.max(0, Math.min(1, -rect.top / scrollable));
+      const { stageName, step } = getStage(progress);
+      const eyebrowProgress = range(progress, 0, 0.18);
+      const titleProgress = range(progress, 0.08, 0.4);
+      const dockProgress = range(progress, 0.42, 0.56);
+      const boardProgress = range(progress, 0.42, 0.56);
+      const contentProgress = range(progress, 0.52, 1);
+
+      stage.dataset.trustStage = stageName;
+      stage.dataset.trustStep = step;
+      stage.style.setProperty("--trust-progress", progress.toFixed(4));
+      stage.style.setProperty("--trust-eyebrow-progress", eyebrowProgress.toFixed(4));
+      stage.style.setProperty("--trust-title-progress", titleProgress.toFixed(4));
+      stage.style.setProperty("--trust-dock-progress", dockProgress.toFixed(4));
+      stage.style.setProperty("--trust-board-progress", boardProgress.toFixed(4));
+      stage.style.setProperty("--trust-content-progress", contentProgress.toFixed(4));
       titleWords.forEach((word, index) => {
         const wordStart = titleWords.length <= 1 ? 0 : (index / (titleWords.length - 1)) * 0.7;
         const wordProgress = clamp((titleProgress - wordStart) / 0.24);

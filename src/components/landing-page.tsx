@@ -1,34 +1,20 @@
 import { HapticLink } from "@/components/haptic-link";
 import { LandingInteractionShell } from "@/components/landing-interactions";
-import {
-  landingFeatures,
-  lifestyleImages,
-  testimonials,
-  trustSignals,
-} from "@/lib/spendpilot-data";
+import { testimonials } from "@/lib/spendpilot-data";
 import {
   ArrowRight,
+  Bell,
   Check,
   ChevronRight,
   CreditCard,
-  Fingerprint,
   Mail,
   Mic,
   ShieldCheck,
+  Sparkles,
   Star,
+  Trophy,
   WalletCards,
-  Zap,
 } from "lucide-react";
-import Image from "next/image";
-
-const moneyNotes = [
-  "rent already cleared",
-  "card payment out Friday",
-  "Spotify went up $2",
-  "dinner still in budget",
-  "refund hit the account",
-  "$42 recovered this week",
-];
 
 const problemScenes = [
   {
@@ -51,6 +37,173 @@ const problemScenes = [
 const problemTitleLines = [
   ["A", "balance", "looks", "rich"],
   ["until", "life", "takes", "its", "cut."],
+] as const;
+
+const questionTitleLines = [
+  ["Three", "questions."],
+  ["One", "moving", "answer."],
+] as const;
+
+const questionScenes = [
+  {
+    step: "01",
+    label: "At checkout",
+    question: "Can I buy this?",
+    answer: "$186",
+    answerLabel: "safe to spend today",
+    body: "Float answers with the money that is actually yours after the boring obligations already left.",
+    action: "Dinner still fits",
+    meta: "rent, card, goals already removed",
+    tone: "sky",
+  },
+  {
+    step: "02",
+    label: "Morning brief",
+    question: "What changed today?",
+    answer: "Spotify rose $2",
+    answerLabel: "before next month hits",
+    body: "Price moves, quiet renewals, and odd spend shifts show up as decisions while they are still small.",
+    action: "Lower or cancel",
+    meta: "change caught 12 days early",
+    tone: "gold",
+  },
+  {
+    step: "03",
+    label: "Review queue",
+    question: "What needs attention?",
+    answer: "3 moves",
+    answerLabel: "ready in the brief",
+    body: "The app does not ask you to interpret charts. It gives the next useful move and lets everything else wait.",
+    action: "Keep the day moving",
+    meta: "less than five minutes",
+    tone: "mint",
+  },
+] as const;
+
+const briefTitleLines = [
+  ["One", "feed."],
+  ["Three", "answers."],
+  ["No", "spreadsheet", "brain."],
+] as const;
+
+const briefScenes = [
+  {
+    step: "01",
+    label: "Always current",
+    title: "Your float stays honest",
+    body: "Rent, cards, goals, and quiet renewals leave before the spendable number shows up.",
+    metric: "$186",
+    metricLabel: "safe today",
+    action: "today's float",
+    icon: WalletCards,
+    tone: "sky",
+    rows: [
+      ["Rent cleared", "sorted"],
+      ["Card payment out Friday", "watch"],
+      ["Goals protected", "saved"],
+    ],
+  },
+  {
+    step: "02",
+    label: "Leaks early",
+    title: "Quiet changes surface first",
+    body: "Price increases, unused trials, duplicate tools, and renewals become review cards before they surprise you.",
+    metric: "$2",
+    metricLabel: "Spotify rose",
+    action: "review renewal",
+    icon: Bell,
+    tone: "gold",
+    rows: [
+      ["Spotify went up $2", "lower"],
+      ["Storage trial renews", "cancel"],
+      ["Duplicate tool found", "merge"],
+    ],
+  },
+  {
+    step: "03",
+    label: "Direct answers",
+    title: "Ask the money question",
+    body: "Dinner, payday, what changed, and what to pause are answered as decisions instead of charts.",
+    metric: "fits",
+    metricLabel: "dinner tonight",
+    action: "answer ready",
+    icon: Sparkles,
+    tone: "mint",
+    rows: [
+      ["Can I buy this?", "yes"],
+      ["What changed?", "3 items"],
+      ["Which bill is next?", "Friday"],
+    ],
+  },
+  {
+    step: "04",
+    label: "Small habit",
+    title: "Five minutes keeps it clean",
+    body: "A short daily review, weekly recovery, and spending rooms keep money admin from becoming a second job.",
+    metric: "< 5m",
+    metricLabel: "daily check",
+    action: "brief complete",
+    icon: Trophy,
+    tone: "ink",
+    rows: [
+      ["Morning brief", "done"],
+      ["$42 recovered", "found"],
+      ["18 day streak", "live"],
+    ],
+  },
+] as const;
+
+const trustTitleLines = [
+  ["Playful", "interface."],
+  ["Serious", "money", "boundaries."],
+] as const;
+
+const trustScenes = [
+  {
+    step: "01",
+    label: "Protected app shell",
+    title: "Only the person signed in gets the room",
+    body: "Google sign-in keeps the app door clear, sessions stay scoped, and every money view opens from the same protected shell.",
+    signal: "Access",
+    status: "protected",
+    icon: ShieldCheck,
+    tone: "mint",
+    rows: [
+      ["Google sign-in", "active"],
+      ["App shell", "guarded"],
+      ["Session check", "current"],
+    ],
+  },
+  {
+    step: "02",
+    label: "Email import path",
+    title: "Imports are reviewed before they matter",
+    body: "Receipts and renewal notices can become useful cards without turning the inbox into an automatic money machine.",
+    signal: "Review",
+    status: "before saving",
+    icon: Mail,
+    tone: "sky",
+    rows: [
+      ["Receipt found", "review"],
+      ["Renewal notice", "flagged"],
+      ["Saved history", "exportable"],
+    ],
+  },
+  {
+    step: "03",
+    label: "Voice-first money questions",
+    title: "Questions stay fast without losing context",
+    body: "Ask what changed, what is safe, or what needs attention. Float answers from the same money story already on screen.",
+    signal: "Ask",
+    status: "with context",
+    icon: Mic,
+    tone: "ink",
+    rows: [
+      ["What changed?", "answered"],
+      ["Can I buy this?", "checked"],
+      ["What is next?", "ready"],
+    ],
+  },
 ] as const;
 
 export function LandingPage() {
@@ -171,7 +324,7 @@ function ProblemSection() {
         <div className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-linear-to-b from-white/22 to-transparent" />
         <div className="problem-story-inner relative mx-auto h-dvh max-w-7xl">
           <div className="problem-headline-lockup">
-            <p className="problem-eyebrow font-black uppercase">The actual problem</p>
+            <p className="problem-eyebrow">The actual problem</p>
             <h2
               className="problem-main-title font-display display-kern mt-4 font-black leading-none"
               aria-label="A balance looks rich until life takes its cut."
@@ -300,111 +453,96 @@ function ProblemSection() {
 
 function LifestyleSection() {
   return (
-    <section className="px-4 py-20 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl">
-        <div className="mb-10 flex flex-col justify-between gap-5 md:flex-row md:items-end">
-          <div>
-            <p className="text-sm font-black uppercase text-ink/42" data-reveal="left">Real life, not a spreadsheet</p>
+    <section data-question-scroll="true" className="question-story relative h-[430svh] scroll-mt-0">
+      <div
+        data-question-stage="prelude"
+        data-question-step="-1"
+        className="question-story-stage sticky top-0 h-dvh overflow-hidden px-4 sm:px-6 lg:px-8"
+      >
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-36 bg-linear-to-b from-white/16 to-transparent" />
+        <div className="question-story-inner relative mx-auto h-dvh max-w-7xl">
+          <div className="question-chapter-copy">
+            <p className="question-eyebrow">Real life, not a spreadsheet</p>
             <h2
-              className="font-display display-kern text-balance mt-3 max-w-3xl text-6xl font-black leading-none max-sm:text-4xl"
-              data-reveal="left"
-              style={{ transitionDelay: "80ms" }}
+              className="question-chapter-title font-display display-kern mt-4 font-black leading-none"
+              aria-label="Three questions. One moving answer."
             >
-              Built for the three questions people actually ask.
+              {questionTitleLines.map((line, lineIndex) => (
+                <span key={line.join(" ")} className="question-title-line" aria-hidden="true">
+                  {line.map((word) => (
+                    <span key={`${lineIndex}-${word}`} className="question-title-word" data-question-word>
+                      {word}
+                    </span>
+                  ))}
+                </span>
+              ))}
             </h2>
           </div>
-          <div data-reveal="right" style={{ transitionDelay: "120ms" }}>
-            <AnimatedCardWave />
+
+          <div className="question-track">
+            {questionScenes.map((scene) => (
+              <article key={scene.question} className="question-step relative pl-14">
+                <span className="question-step-number money-figures absolute left-0 top-1 text-sm font-black text-ink/36">
+                  {scene.step}
+                </span>
+                <p className="text-sm font-black uppercase tracking-[0.11em] text-ink/42">{scene.label}</p>
+                <h3 className="font-display display-kern mt-2 text-5xl font-black leading-none">{scene.question}</h3>
+                <p className="mt-4 max-w-[34rem] text-xl font-semibold leading-8 text-ink/62">{scene.body}</p>
+                <div className="mt-6 inline-flex items-center gap-2 rounded-full bg-white/72 px-4 py-2 text-sm font-black shadow-[0_14px_40px_rgba(23,23,23,0.08)]">
+                  <span className="grid h-6 w-6 place-items-center rounded-full bg-sky text-ink">
+                    <Check size={14} strokeWidth={3} />
+                  </span>
+                  {scene.action}
+                </div>
+              </article>
+            ))}
           </div>
-        </div>
 
-        <div className="grid gap-5 lg:grid-cols-3">
-          {lifestyleImages.map((image, index) => (
-            <article
-              key={image.src}
-              data-cursor-card="true"
-              className={`cursor-reactive image-card group relative min-h-[520px] overflow-hidden rounded-[2.2rem] border border-white/70 bg-ink/8 shadow-[0_32px_90px_rgba(23,23,23,0.16)] ${index === 1 ? "lg:mt-12" : ""
-                }`}
-              data-reveal={index === 0 ? "left" : index === 1 ? "center" : "right"}
-              style={{ transitionDelay: `${index * 120}ms` }}
-            >
-              <Image
-                src={image.src}
-                alt={image.alt}
-                fill
-                sizes="(min-width: 1024px) 33vw, 100vw"
-                className="object-cover transition duration-700 group-hover:scale-105"
-              />
-              <div className="absolute inset-0 bg-linear-to-t from-ink/78 via-ink/18 to-transparent" />
-              <div className="absolute inset-x-0 bottom-0 p-6 text-white">
-                <p className="inline-flex rounded-full bg-white/18 px-3 py-1 text-sm font-bold backdrop-blur-xl">
-                  {image.label}
-                </p>
-                <h3 className="font-display display-kern mt-4 text-3xl font-black">
-                  {index === 0 ? "Can I buy this?" : index === 1 ? "What changed today?" : "What needs my attention?"}
-                </h3>
-              </div>
-            </article>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function FeatureSection() {
-  return (
-    <section id="features" className="px-4 py-24 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl">
-        <div className="grid gap-7 lg:grid-cols-[1.08fr_0.92fr]">
-          <div
-            data-cursor-card="true"
-            className="cursor-reactive rounded-[2.4rem] bg-ink p-6 text-white shadow-[0_34px_110px_rgba(23,23,23,0.22)] sm:p-8"
-            data-reveal="left"
-          >
-            <div className="flex flex-col justify-between gap-6 md:flex-row md:items-start">
-              <div>
-                <p className="text-sm font-black uppercase text-white/42">The daily brief</p>
-                <h2 className="font-display display-kern text-balance mt-4 max-w-xl text-6xl font-black leading-none max-sm:text-4xl">
-                  One feed. Three answers. No spreadsheet brain.
-                </h2>
-              </div>
-              <span className="grid h-16 w-16 place-items-center rounded-full bg-sky text-ink">
-                <Zap size={26} />
-              </span>
-            </div>
-
-            <div className="mt-10 grid gap-3">
-              {moneyNotes.map((note, index) => (
-                <div
-                  key={note}
-                  className="flex items-center justify-between rounded-[1.25rem] border border-white/10 bg-white/8 p-4"
-                  data-reveal={index % 2 === 0 ? "right" : "left"}
-                  style={{ transitionDelay: `${180 + index * 80}ms` }}
-                >
-                  <span className="font-bold">{note}</span>
-                  <span className="rounded-full bg-white px-3 py-1 text-xs font-black text-ink">
-                    {index % 2 === 0 ? "sorted" : "watch"}
+          <div data-cursor-card="true" className="question-board cursor-reactive">
+            <div className="question-board-grid" aria-hidden="true" />
+            {questionScenes.map((scene, index) => (
+              <article key={scene.answer} className={`question-board-scene question-board-scene-${index + 1}`}>
+                <div className="flex items-start justify-between gap-5">
+                  <div>
+                    <p className="text-xs font-black uppercase tracking-[0.18em] text-ink/42">{scene.label}</p>
+                    <h3 className="font-display display-kern mt-4 text-6xl font-black leading-none">{scene.answer}</h3>
+                    <p className="mt-3 text-lg font-bold text-ink/56">{scene.answerLabel}</p>
+                  </div>
+                  <span
+                    className={`grid h-16 w-16 shrink-0 place-items-center rounded-full ${
+                      scene.tone === "gold" ? "bg-[#ffcf6e]" : scene.tone === "mint" ? "bg-mint" : "bg-sky"
+                    }`}
+                  >
+                    {scene.step}
                   </span>
                 </div>
-              ))}
-            </div>
-          </div>
 
-          <div className="grid gap-5 sm:grid-cols-2">
-            {landingFeatures.map((feature, index) => (
-              <article
-                key={feature.title}
-                data-cursor-card="true"
-                className="cursor-reactive group rounded-4xl border border-white/75 bg-white/70 p-6 shadow-[0_24px_80px_rgba(23,23,23,0.10)] backdrop-blur-xl transition duration-300 hover:bg-white"
-                data-reveal={index % 2 === 0 ? "right" : "center"}
-                style={{ transitionDelay: `${index * 90}ms` }}
-              >
-                <span className="grid h-13 w-13 place-items-center rounded-full bg-sky transition duration-300 group-hover:rotate-6 group-hover:scale-110">
-                  <feature.icon size={22} />
-                </span>
-                <h3 className="font-display display-kern mt-8 text-2xl font-black">{feature.title}</h3>
-                <p className="mt-4 text-base leading-7 text-ink/62">{feature.body}</p>
+                <div className="mt-10 grid gap-3">
+                  {index === 0 ? (
+                    <>
+                      <QuestionRow label="Rent cleared" value="removed" tone="dark" />
+                      <QuestionRow label="Card closes Friday" value="claimed" tone="light" />
+                      <QuestionRow label="Fun money" value="$186" tone="blue" />
+                    </>
+                  ) : index === 1 ? (
+                    <>
+                      <QuestionRow label="Keep" value="still fits" tone="light" />
+                      <QuestionRow label="Lower" value="find plan" tone="mint" />
+                      <QuestionRow label="Cancel" value="save $14/mo" tone="dark" />
+                    </>
+                  ) : (
+                    <>
+                      <QuestionRow label="Refund landed" value="+$42" tone="blue" />
+                      <QuestionRow label="Renewal review" value="2 min" tone="light" />
+                      <QuestionRow label="Next move" value="done" tone="dark" />
+                    </>
+                  )}
+                </div>
+
+                <div className="question-board-footer mt-8 flex items-center justify-between rounded-[1.4rem] bg-white/72 px-4 py-3">
+                  <span className="text-sm font-black text-ink/46">{scene.meta}</span>
+                  <span className="rounded-full bg-ink px-3 py-1 text-xs font-black uppercase text-white">current</span>
+                </div>
               </article>
             ))}
           </div>
@@ -414,48 +552,178 @@ function FeatureSection() {
   );
 }
 
-function SocialProofSection() {
+function QuestionRow({ label, value, tone }: { label: string; value: string; tone: "blue" | "dark" | "light" | "mint" }) {
   return (
-    <section id="love" className="px-4 py-24 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl">
-        <div
-          data-cursor-card="true"
-          className="cursor-reactive rounded-[2.5rem] border border-white/70 bg-white/62 p-6 shadow-[0_34px_100px_rgba(23,23,23,0.13)] backdrop-blur-xl sm:p-8"
-          data-reveal="center"
-        >
-          <div className="grid gap-9">
-            <div data-reveal="left">
-              <p className="text-sm font-black uppercase text-ink/42">What users actually say</p>
-              <h2 className="font-display display-kern text-balance mt-4 w-full max-w-none text-6xl font-black leading-none max-sm:text-4xl lg:text-[5.35rem]">
-                Not &ldquo;budget variance.&rdquo; More like &ldquo;dinner still fits.&rdquo;
-              </h2>
-            </div>
+    <div
+      className={`question-row flex items-center justify-between rounded-[1.25rem] px-4 py-3 ${
+        tone === "dark"
+          ? "bg-ink text-white"
+          : tone === "blue"
+            ? "bg-sky text-ink"
+            : tone === "mint"
+              ? "bg-mint text-ink"
+              : "bg-white/82 text-ink"
+      }`}
+    >
+      <span className="font-black">{label}</span>
+      <span className={`money-figures font-black ${tone === "dark" ? "text-white" : "text-ink"}`}>{value}</span>
+    </div>
+  );
+}
 
-            <div className="grid gap-4 md:grid-cols-3">
-              {testimonials.map((item, index) => (
-                <article
-                  key={item.name}
-                  data-cursor-card="true"
-                  className={`cursor-reactive flex min-h-[390px] flex-col justify-between rounded-4xl p-6 shadow-sm sm:p-7 lg:min-h-[440px] ${index === 0 ? "card-blue" : index === 1 ? "card-mint" : "card-black text-white"
-                    }`}
-                  data-reveal={index === 0 ? "fan-left" : index === 1 ? "center" : "fan-right"}
-                  style={{ transitionDelay: `${index * 110}ms` }}
-                >
-                  <p className="font-display display-kern text-3xl font-black leading-[1.12] max-lg:text-2xl">
-                    &ldquo;{item.quote}&rdquo;
-                  </p>
-                  <div className="mt-10">
-                    <div className="mb-7 flex gap-1.5">
-                      {[0, 1, 2, 3, 4].map((star) => (
-                        <Star key={star} size={17} fill="currentColor" />
-                      ))}
+function FeatureSection() {
+  return (
+    <section id="features" data-brief-scroll="true" className="brief-story relative h-[520svh] scroll-mt-0">
+      <div
+        data-brief-stage="prelude"
+        data-brief-step="-1"
+        className="brief-story-stage sticky top-0 h-dvh overflow-hidden px-4 sm:px-6 lg:px-8"
+      >
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-36 bg-linear-to-b from-white/18 to-transparent" />
+        <div className="brief-story-inner relative mx-auto h-dvh max-w-7xl">
+          <div className="brief-headline-lockup">
+            <p className="brief-eyebrow">The daily brief</p>
+            <h2
+              className="brief-main-title font-display display-kern mt-4 font-black leading-none"
+              aria-label="One feed. Three answers. No spreadsheet brain."
+            >
+              {briefTitleLines.map((line, lineIndex) => (
+                <span key={line.join(" ")} className="brief-title-line" aria-hidden="true">
+                  {line.map((word) => (
+                    <span key={`${lineIndex}-${word}`} className="brief-title-word" data-brief-word>
+                      {word}
+                    </span>
+                  ))}
+                </span>
+              ))}
+            </h2>
+          </div>
+
+          <div className="brief-sync-copy">
+            {briefScenes.map((scene) => (
+              <article key={scene.title} className="brief-sync-step relative pl-14">
+                <span className="brief-sync-number money-figures absolute left-0 top-1 text-sm font-black text-ink/36">
+                  {scene.step}
+                </span>
+                <p className="text-sm font-black uppercase tracking-[0.11em] text-ink/42">{scene.label}</p>
+                <h3 className="mt-2 font-black leading-none text-ink">{scene.title}</h3>
+                <p className="mt-3 max-w-[33rem] font-semibold text-ink/60">{scene.body}</p>
+              </article>
+            ))}
+          </div>
+
+          <div data-cursor-card="true" className="brief-board cursor-reactive">
+            <div className="brief-board-grid" aria-hidden="true" />
+            {briefScenes.map((scene, index) => {
+              const Icon = scene.icon;
+
+              return (
+                <article key={scene.title} className={`brief-board-scene brief-board-scene-${index + 1}`}>
+                  <div className="brief-board-top relative z-10 rounded-[1.8rem] bg-ink p-5 text-white shadow-[0_26px_70px_rgba(23,23,23,0.25)]">
+                    <div className="flex items-start justify-between gap-5">
+                      <div>
+                        <p className="text-xs font-black uppercase tracking-[0.18em] text-white/42">{scene.label}</p>
+                        <p className="money-figures mt-3 text-6xl font-black leading-none tracking-normal">
+                          {scene.metric}
+                        </p>
+                        <p className="mt-3 text-sm font-semibold text-white/62">{scene.metricLabel}</p>
+                      </div>
+                      <span
+                        className={`grid h-15 w-15 shrink-0 place-items-center rounded-full ${
+                          scene.tone === "gold"
+                            ? "bg-[#ffcf6e] text-ink"
+                            : scene.tone === "mint"
+                              ? "bg-mint text-ink"
+                              : scene.tone === "ink"
+                                ? "bg-white text-ink"
+                                : "bg-sky text-ink"
+                        }`}
+                      >
+                        <Icon size={24} strokeWidth={2.6} />
+                      </span>
                     </div>
-                    <p className="font-black">{item.name}</p>
-                    <p className="text-sm opacity-60">{item.role}</p>
+                  </div>
+
+                  <div className="relative z-10 mt-4 grid gap-3">
+                    {scene.rows.map(([label, status]) => (
+                      <div key={label} className="brief-feed-row flex items-center justify-between rounded-[1.2rem] bg-white/84 px-4 py-3">
+                        <span className="text-sm font-black text-ink/70">{label}</span>
+                        <span className="rounded-full bg-ink px-3 py-1 text-xs font-black text-white">{status}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="brief-next-move relative z-10 mt-4 flex items-center justify-between rounded-[1.4rem] bg-sky px-4 py-4">
+                    <span className="text-sm font-black uppercase tracking-[0.14em] text-ink/48">Next move</span>
+                    <span className="font-black text-ink">{scene.action}</span>
                   </div>
                 </article>
-              ))}
-            </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function SocialProofSection() {
+  return (
+    <section id="love" data-social-scroll="true" className="social-proof-story relative h-[430svh] scroll-mt-0">
+      <div
+        data-social-stage="prelude"
+        data-social-step="-1"
+        className="social-proof-stage sticky top-0 h-dvh overflow-hidden px-4 sm:px-6 lg:px-8"
+      >
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-36 bg-linear-to-b from-white/18 to-transparent" />
+        <div className="social-proof-inner relative mx-auto h-dvh max-w-7xl">
+          <div className="social-headline-lockup">
+            <p className="social-eyebrow">What users actually say</p>
+            <h2
+              className="social-main-title font-display display-kern mt-4 font-black leading-none"
+              aria-label='Not "budget variance." More like "dinner still fits."'
+            >
+              <span className="social-title-line" aria-hidden="true">
+                <span className="social-title-word" data-social-word>Not</span>
+                <span className="social-quote-mark social-highlight-green">&ldquo;</span>
+                <span className="social-title-word social-highlight-green" data-social-word>budget</span>
+                <span className="social-title-word social-highlight-green" data-social-word>variance.</span>
+                <span className="social-quote-mark social-highlight-green">&rdquo;</span>
+              </span>
+              <span className="social-title-line" aria-hidden="true">
+                <span className="social-title-word" data-social-word>More</span>
+                <span className="social-title-word" data-social-word>like</span>
+                <span className="social-quote-mark social-highlight-yellow">&ldquo;</span>
+                <span className="social-title-word social-highlight-yellow" data-social-word>dinner</span>
+                <span className="social-title-word social-highlight-yellow" data-social-word>still</span>
+                <span className="social-title-word social-highlight-yellow" data-social-word>fits.</span>
+                <span className="social-quote-mark social-highlight-yellow">&rdquo;</span>
+              </span>
+            </h2>
+          </div>
+
+          <div className="social-testimonial-grid">
+            {testimonials.map((item, index) => (
+              <article
+                key={item.name}
+                data-cursor-card="true"
+                className={`social-testimonial-card social-testimonial-card-${index + 1} cursor-reactive flex min-h-[390px] flex-col justify-between rounded-4xl p-6 shadow-[0_24px_80px_rgba(23,23,23,0.10)] sm:p-7 lg:min-h-[440px] ${index === 0 ? "card-blue" : index === 1 ? "card-mint" : "bg-[#ffcf6e] text-ink"
+                  }`}
+              >
+                <p className="font-display display-kern text-3xl font-black leading-[1.12] max-lg:text-2xl">
+                  &ldquo;{item.quote}&rdquo;
+                </p>
+                <div className="mt-10">
+                  <div className="mb-7 flex gap-1.5">
+                    {[0, 1, 2, 3, 4].map((star) => (
+                      <Star key={star} size={17} fill="currentColor" />
+                    ))}
+                  </div>
+                  <p className="font-black">{item.name}</p>
+                  <p className="text-sm opacity-60">{item.role}</p>
+                </div>
+              </article>
+            ))}
           </div>
         </div>
       </div>
@@ -465,53 +733,87 @@ function SocialProofSection() {
 
 function SecuritySection() {
   return (
-    <section id="trust" className="px-4 py-24 sm:px-6 lg:px-8">
-      <div className="mx-auto grid max-w-7xl gap-7 lg:grid-cols-[1fr_0.86fr]">
-        <div
-          data-cursor-card="true"
-          className="cursor-reactive card-black relative overflow-hidden rounded-[2.4rem] p-8 text-white"
-          data-reveal="left"
-        >
-          <AnimatedSpark className="absolute right-10 top-10 h-20 w-20 text-sky" />
-          <p className="text-sm font-black uppercase text-white/42">Trust layer</p>
-          <h2 className="font-display display-kern text-balance mt-4 max-w-2xl text-6xl font-black leading-none max-sm:text-4xl">
-            Playful interface. Serious money boundaries.
-          </h2>
-          <p className="mt-6 max-w-xl text-lg leading-8 text-white/64">
-            The product feels light because the rules are strict: connect intentionally, review before saving, export
-            when needed, and keep sensitive credentials away from the browser.
-          </p>
-          <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {trustSignals.map((signal) => (
-              <div key={signal} className="rounded-[1.35rem] border border-white/10 bg-white/8 p-4 font-bold">
-                {signal}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div data-cursor-card="true" className="cursor-reactive glass-panel rounded-[2.4rem] p-8" data-reveal="right">
-          <div className="grid h-16 w-16 place-items-center rounded-full bg-mint">
-            <Fingerprint size={26} />
-          </div>
-          <h3 className="font-display display-kern text-balance mt-10 text-5xl font-black leading-none max-sm:text-4xl">A money app that respects trust.</h3>
-          <p className="mt-5 text-base leading-7 text-ink/62">
-            Google sign-in is wired for production, app access is immediate, and Float keeps the money story
-            consistent across mobile and desktop.
-          </p>
-          <div className="mt-8 grid gap-3">
-            {[
-              [ShieldCheck, "Protected app shell"],
-              [Mail, "Email import path"],
-              [Mic, "Voice-first money questions"],
-            ].map(([Icon, label]) => (
-              <div key={label as string} className="flex items-center gap-3 rounded-[1.25rem] bg-white/70 p-3">
-                <span className="grid h-10 w-10 place-items-center rounded-full bg-ink text-white">
-                  <Icon size={17} />
+    <section id="trust" data-trust-scroll="true" className="trust-story relative h-[430svh] scroll-mt-0">
+      <div
+        data-trust-stage="prelude"
+        data-trust-step="-1"
+        className="trust-story-stage sticky top-0 h-dvh overflow-hidden px-4 sm:px-6 lg:px-8"
+      >
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-36 bg-linear-to-b from-white/16 to-transparent" />
+        <div className="trust-story-inner relative mx-auto h-dvh max-w-7xl">
+          <div className="trust-headline-lockup">
+            <p className="trust-eyebrow">Trust layer</p>
+            <h2
+              className="trust-main-title font-display display-kern mt-4 font-black leading-none"
+              aria-label="Playful interface. Serious money boundaries."
+            >
+              {trustTitleLines.map((line, lineIndex) => (
+                <span key={line.join(" ")} className="trust-title-line" aria-hidden="true">
+                  {line.map((word) => (
+                    <span key={`${lineIndex}-${word}`} className="trust-title-word" data-trust-word>
+                      {word}
+                    </span>
+                  ))}
                 </span>
-                <span className="font-black">{label as string}</span>
-              </div>
+              ))}
+            </h2>
+          </div>
+
+          <div className="trust-sync-copy">
+            {trustScenes.map((scene) => (
+              <article key={scene.title} className="trust-sync-step relative pl-14">
+                <span className="trust-sync-number money-figures absolute left-0 top-1 text-sm font-black text-ink/36">
+                  {scene.step}
+                </span>
+                <p className="text-sm font-black uppercase tracking-[0.11em] text-ink/42">{scene.label}</p>
+                <h3 className="mt-2 font-black leading-none text-ink">{scene.title}</h3>
+                <p className="mt-3 max-w-[34rem] font-semibold text-ink/60">{scene.body}</p>
+              </article>
             ))}
+          </div>
+
+          <div data-cursor-card="true" className="trust-board cursor-reactive">
+            <div className="trust-board-grid" aria-hidden="true" />
+
+            {trustScenes.map((scene, index) => {
+              const Icon = scene.icon;
+
+              return (
+                <article key={scene.title} className={`trust-board-scene trust-board-scene-${index + 1}`}>
+                  <div className={`trust-console trust-console-${scene.tone}`}>
+                    <div className="trust-console-head">
+                      <div>
+                        <p className="trust-console-kicker">{scene.label}</p>
+                        <h3 className="trust-console-title font-display display-kern">{scene.title}</h3>
+                      </div>
+                      <span className="trust-console-icon">
+                        <Icon size={25} strokeWidth={2.6} />
+                      </span>
+                    </div>
+
+                    <p className="trust-console-body">{scene.body}</p>
+
+                    <div className="trust-rule-band">
+                      <span>Current rule</span>
+                      <strong>{scene.status}</strong>
+                    </div>
+
+                    <div className="trust-proof-grid">
+                      <div className="trust-proof-tile trust-proof-tile-feature">
+                        <span>{scene.signal}</span>
+                        <strong>{scene.status}</strong>
+                      </div>
+                      {scene.rows.map(([label, status]) => (
+                        <div key={label} className="trust-proof-tile">
+                          <span>{label}</span>
+                          <strong>{status}</strong>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -688,17 +990,6 @@ function AnimatedSpark({ className = "" }: { className?: string }) {
         stroke="#171717"
         strokeWidth="2"
       />
-    </svg>
-  );
-}
-
-function AnimatedCardWave() {
-  return (
-    <svg className="h-24 w-56 text-ink" viewBox="0 0 260 110" fill="none" aria-hidden="true">
-      <rect className="card-wiggle" x="10" y="24" width="92" height="58" rx="16" fill="#87DCFB" stroke="#171717" strokeWidth="2" />
-      <rect className="card-wiggle-delay" x="84" y="14" width="92" height="58" rx="16" fill="#C8E9CA" stroke="#171717" strokeWidth="2" />
-      <rect className="card-wiggle" x="158" y="34" width="92" height="58" rx="16" fill="#171717" stroke="#171717" strokeWidth="2" />
-      <path className="draw-line" d="M22 96C76 76 116 108 164 78C198 57 218 68 246 48" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
     </svg>
   );
 }

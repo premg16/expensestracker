@@ -256,7 +256,7 @@ function DashboardContentStage({ view }: { view: AppView }) {
   return (
     <div className="relative min-h-full" aria-busy={phase !== "ready"}>
       <div
-        className={`mx-auto w-full max-w-[1440px] p-3 pb-24 transition-[opacity,transform,filter] duration-500 ease-[cubic-bezier(.16,1,.3,1)] sm:p-5 lg:pb-6 ${contentVisible ? "translate-y-0 scale-100 opacity-100 blur-0" : "translate-y-3 scale-[0.992] opacity-0 blur-sm"
+        className={`dashboard-view-stage mx-auto w-full max-w-[1440px] p-3 pb-24 transition-[opacity,transform,filter] duration-500 ease-[cubic-bezier(.16,1,.3,1)] sm:p-5 lg:pb-6 ${contentVisible ? "translate-y-0 scale-100 opacity-100 blur-0" : "translate-y-3 scale-[0.992] opacity-0 blur-sm"
           } ${phase === "revealing" ? "dashboard-page-transition" : ""}`}
       >
         {view === "overview" && <OverviewView />}
@@ -412,7 +412,7 @@ function DashboardLoadingStage({ phase, view }: { phase: DashboardLoadPhase; vie
       aria-hidden="true"
       data-phase={phase}
       data-view={view}
-      className="dashboard-loader-stage pointer-events-none absolute inset-0 z-20 mx-auto w-full max-w-[1440px] p-3 pb-24 sm:p-5 lg:pb-6"
+      className="dashboard-loader-stage dashboard-loader-shimmer pointer-events-none absolute inset-0 z-20 mx-auto w-full max-w-[1440px] p-3 pb-24 sm:p-5 lg:pb-6"
     >
       {view === "overview" && <OverviewLoadingLayout />}
       {view === "activity" && <ActivityLoadingLayout />}
