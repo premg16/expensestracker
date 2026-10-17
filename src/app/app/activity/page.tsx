@@ -1,5 +1,5 @@
-import { PersonalDashboard } from "@/components/personal-dashboard";
+import { AppScreen } from "@/components/app-screen";
 
 export default function ActivityPage() {
-  return <PersonalDashboard view="activity" />;
+  return <AppScreen view="activity" />;
 }

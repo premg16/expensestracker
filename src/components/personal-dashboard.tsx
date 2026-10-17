@@ -1,16 +1,25 @@
 "use client";
 
+import { AddTransactionForm, BudgetForm, CsvImport, DeleteButton, focusSection } from "@/components/entry-forms";
 import { FloatingFinanceCompanion } from "@/components/floating-finance-companion";
 import { HapticLink } from "@/components/haptic-link";
+import type { Budget, Transaction } from "@/lib/finance-data";
 import {
-  appNav,
-  budgetRooms,
-  cardStack,
-  challenges,
-  liveFeed,
-  subscriptionStack,
-  userProfile,
-} from "@/lib/spendpilot-data";
+  accountSummaries,
+  budgetStatus,
+  buildActionQueue,
+  categorySpend,
+  currency,
+  isoDate,
+  latestRecurring,
+  monthSnapshot,
+  floorCents,
+  safeToSpend,
+  type ActionItem,
+  type BudgetLine,
+} from "@/lib/finance-model";
+import { appNav } from "@/lib/float-data";
+import { useClerk, useUser } from "@clerk/nextjs";
 import {
   ArrowDownLeft,
   ArrowRight,
@@ -18,13 +27,12 @@ import {
   BadgeDollarSign,
   Bell,
   CalendarClock,
-  Check,
   ChevronRight,
   CircleDollarSign,
   CreditCard,
   Download,
   Landmark,
-  ListFilter,
+  LogOut,
   PanelLeftClose,
   PanelLeftOpen,
   PiggyBank,
@@ -32,14 +40,12 @@ import {
   ReceiptText,
   Search,
   ShieldCheck,
-  SlidersHorizontal,
   Target,
   TrendingDown,
-  TrendingUp,
   WalletCards,
   Zap,
 } from "lucide-react";
-import { useEffect, useRef, useState, type RefObject } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore, type RefObject } from "react";
 
 type AppView = "overview" | "activity" | "budgets" | "cards";
 type DashboardLoadPhase = "loading" | "revealing" | "ready";
@@ -49,69 +55,44 @@ type DashboardCopy = {
   title: string;
   body: string;
   primaryAction: string;
+  // Either links to another page or scrolls to a form on this one.
+  href?: string;
+  section?: string;
 };
 
 const viewCopy: Record<AppView, DashboardCopy> = {
   overview: {
     eyebrow: "Daily command",
     title: "Know what is safe to spend.",
-    body: "Cash, bills, budgets, cards, and review items in one scan.",
+    body: "Income, spending, budgets, and review items in one scan.",
     primaryAction: "Add expense",
+    href: "/app/activity#add-transaction",
   },
   activity: {
     eyebrow: "Activity ledger",
     title: "Review transactions without digging.",
-    body: "Search, filter, and clear the items that need attention.",
+    body: "Search, filter, add, and import the money that moves.",
     primaryAction: "Import CSV",
+    section: "import-csv",
   },
   budgets: {
     eyebrow: "Budget control",
     title: "See pressure before it becomes a miss.",
-    body: "Category limits, risks, and practical moves for the month.",
-    primaryAction: "Adjust limits",
+    body: "Category limits, risks, and what is left for the month.",
+    primaryAction: "Set a budget",
+    section: "budget-form",
   },
   cards: {
-    eyebrow: "Cards and renewals",
-    title: "Track balances, due dates, and quiet charges.",
-    body: "Card utilization, payment timing, and subscription decisions.",
-    primaryAction: "Add card",
+    eyebrow: "Accounts and renewals",
+    title: "See where money leaves, and what repeats.",
+    body: "Spending by account and the recurring charges you track.",
+    primaryAction: "Add transaction",
+    href: "/app/activity#add-transaction",
   },
 };
 
-const moneyFlow = [
-  { label: "Income cleared", value: "$8,420", icon: Landmark, tone: "bg-mint text-ink" },
-  { label: "Fixed bills", value: "-$3,240", icon: ReceiptText, tone: "bg-[#ff9a76] text-ink" },
-  { label: "Goals reserved", value: "-$820", icon: PiggyBank, tone: "bg-sky text-ink" },
-  { label: "Safe to spend", value: "$186", icon: BadgeDollarSign, tone: "bg-[#f9d85f] text-ink" },
-];
-
-const actionQueue = [
-  {
-    title: "Spotify Duo increased",
-    detail: "Price changed by $2. Decide before the next renewal.",
-    action: "Review",
-    tone: "urgent",
-  },
-  {
-    title: "Groceries are tight",
-    detail: "$138 left with 12 days to go.",
-    action: "Plan",
-    tone: "warn",
-  },
-  {
-    title: "Emergency fund ahead",
-    detail: "6.4 months covered. Extra transfer can pause this week.",
-    action: "Keep",
-    tone: "good",
-  },
-];
-
-const activityFilters = ["All", "Review", "Recurring", "Income"];
-const cardHealth = [
-  { label: "Utilization", value: "22%", detail: "healthy range" },
-  { label: "Autopay", value: "On", detail: "all cards" },
-  { label: "Next due", value: "5d", detail: "Travel Card" },
-];
+const activityFilters = ["All", "Review", "Recurring", "Income"] as const;
+const PAGE_SIZE = 100;
 
 const cursorCardProps = { "data-cursor-card": "true" } as const;
 
@@ -195,10 +176,71 @@ function useCursorReactiveCards(rootRef: RefObject<HTMLElement | null>) {
   }, [rootRef]);
 }
 
-export function PersonalDashboard({ view = "overview" }: { view?: AppView }) {
+type DashboardModel = ReturnType<typeof deriveModel>;
+
+function deriveModel(transactions: Transaction[], budgets: Budget[], today: string) {
+  const snapshot = monthSnapshot(transactions, today);
+  const lines = budgetStatus(snapshot.inMonth, budgets);
+  const safe = safeToSpend(snapshot, lines);
+  const weekStart = shiftDays(today, -6);
+  const budgetLimit = lines.reduce((total, line) => total + line.limit, 0);
+  const budgetUsed = lines.reduce((total, line) => total + line.used, 0);
+
+  return {
+    transactions,
+    budgets,
+    today,
+    snapshot,
+    lines,
+    safe,
+    actions: buildActionQueue(lines, transactions, snapshot.daysLeft),
+    weekSpend: transactions
+      .filter((item) => item.kind === "expense" && item.date >= weekStart && item.date <= today)
+      .reduce((total, item) => total + item.amount, 0),
+    usedPercent:
+      lines.length > 0
+        ? Math.round((budgetUsed / Math.max(budgetLimit, 1)) * 100)
+        : snapshot.income > 0
+          ? Math.round((snapshot.spend / snapshot.income) * 100)
+          : 0,
+    categories: [...new Set([...budgets.map((item) => item.category), ...transactions.map((item) => item.category)])].sort(),
+    accounts: [...new Set(transactions.map((item) => item.account))].sort(),
+  };
+}
+
+function shiftDays(iso: string, days: number) {
+  const date = new Date(`${iso}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
+function formatDay(iso: string) {
+  return new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+}
+
+const noopSubscribe = () => () => {};
+
+// Server renders the UTC date; the browser swaps in the user's local date without a hydration mismatch.
+function useToday(serverToday: string) {
+  return useSyncExternalStore(noopSubscribe, () => isoDate(new Date()), () => serverToday);
+}
+
+export function PersonalDashboard({
+  view = "overview",
+  transactions,
+  budgets,
+  today: serverToday,
+}: {
+  view?: AppView;
+  transactions: Transaction[];
+  budgets: Budget[];
+  today: string;
+}) {
   const copy = viewCopy[view];
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const dashboardRef = useRef<HTMLElement | null>(null);
+  const today = useToday(serverToday);
+  const model = deriveModel(transactions, budgets, today);
 
   useCursorReactiveCards(dashboardRef);
 
@@ -213,11 +255,11 @@ export function PersonalDashboard({ view = "overview" }: { view?: AppView }) {
           <AppSidebar view={view} collapsed={!sidebarOpen} onToggle={() => setSidebarOpen((open) => !open)} />
 
           <section className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden">
-            <AppHeader copy={copy} />
+            <AppHeader copy={copy} transactions={transactions} />
 
             <div className="relative min-h-0 flex-1 overflow-y-auto">
               <div className="relative min-h-full">
-                <DashboardContentStage key={view} view={view} />
+                <DashboardContentStage key={view} view={view} model={model} />
               </div>
             </div>
           </section>
@@ -239,7 +281,7 @@ function DashboardRhythmBackground() {
   );
 }
 
-function DashboardContentStage({ view }: { view: AppView }) {
+function DashboardContentStage({ view, model }: { view: AppView; model: DashboardModel }) {
   const [phase, setPhase] = useState<DashboardLoadPhase>("loading");
   const contentVisible = phase !== "loading";
 
@@ -259,10 +301,10 @@ function DashboardContentStage({ view }: { view: AppView }) {
         className={`dashboard-view-stage mx-auto w-full max-w-[1440px] p-3 pb-24 transition-[opacity,transform,filter] duration-500 ease-[cubic-bezier(.16,1,.3,1)] sm:p-5 lg:pb-6 ${contentVisible ? "translate-y-0 scale-100 opacity-100 blur-0" : "translate-y-3 scale-[0.992] opacity-0 blur-sm"
           } ${phase === "revealing" ? "dashboard-page-transition" : ""}`}
       >
-        {view === "overview" && <OverviewView />}
-        {view === "activity" && <ActivityView />}
-        {view === "budgets" && <BudgetsView />}
-        {view === "cards" && <CardsView />}
+        {view === "overview" && <OverviewView model={model} />}
+        {view === "activity" && <ActivityView model={model} />}
+        {view === "budgets" && <BudgetsView model={model} />}
+        {view === "cards" && <AccountsView model={model} />}
       </div>
 
       {phase !== "ready" && <DashboardLoadingStage phase={phase} view={view} />}
@@ -324,23 +366,7 @@ function AppSidebar({
       </nav>
 
       <div className="mt-auto space-y-3 border-t border-ink/8 pt-4">
-        <div className={`flex items-center ${collapsed ? "justify-center" : "gap-3"}`}>
-          <span className="grid h-10 w-10 place-items-center rounded-full bg-[#ff9a76] text-sm font-black text-ink">
-            {userProfile.name[0]}
-          </span>
-          <div
-            className={`min-w-0 flex-1 overflow-hidden transition-all duration-300 ${collapsed ? "w-0 opacity-0" : "w-28 opacity-100"
-              }`}
-          >
-            <p className="truncate text-sm font-black leading-none">{userProfile.name}</p>
-            <p className="mt-1 text-xs text-ink/42">{userProfile.plan}</p>
-          </div>
-          {!collapsed && (
-            <button className="grid h-9 w-9 place-items-center rounded-full border border-ink/10 bg-white/62 text-ink/50 transition hover:bg-ink hover:text-white" aria-label="Notifications">
-              <Bell size={16} />
-            </button>
-          )}
-        </div>
+        <SidebarUser collapsed={collapsed} />
         <button
           type="button"
           onClick={onToggle}
@@ -356,7 +382,47 @@ function AppSidebar({
   );
 }
 
-function AppHeader({ copy }: { copy: DashboardCopy }) {
+function SidebarUser({ collapsed }: { collapsed: boolean }) {
+  const { user } = useUser();
+  const { signOut } = useClerk();
+  const email = user?.primaryEmailAddress?.emailAddress ?? "";
+  const name = user?.firstName ?? (email ? email.split("@")[0] : "Your account");
+
+  return (
+    <div className={`flex items-center ${collapsed ? "flex-col gap-2" : "gap-3"}`}>
+      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#ff9a76] text-sm font-black uppercase text-ink">
+        {name[0] ?? "F"}
+      </span>
+      {!collapsed && (
+        <div className="min-w-0 flex-1 animate-in">
+          <p className="truncate text-sm font-black leading-none">{name}</p>
+          <p className="mt-1 truncate text-xs text-ink/42">{email || "Signed in"}</p>
+        </div>
+      )}
+      <button
+        type="button"
+        onClick={() => void signOut({ redirectUrl: "/" })}
+        className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-ink/10 bg-white/62 text-ink/50 transition hover:bg-ink hover:text-white active:scale-95"
+        aria-label="Sign out"
+        title="Sign out"
+      >
+        <LogOut size={16} />
+      </button>
+    </div>
+  );
+}
+
+function AppHeader({ copy, transactions }: { copy: DashboardCopy; transactions: Transaction[] }) {
+  const { signOut } = useClerk();
+  const buttonClass = "black-button haptic inline-flex h-10 items-center gap-2 rounded-full px-4 text-sm font-black";
+  const label = (
+    <>
+      <Plus size={16} />
+      <span className="hidden sm:inline">{copy.primaryAction}</span>
+      <span className="sm:hidden">Add</span>
+    </>
+  );
+
   return (
     <header className="sticky top-0 z-20 p-3 sm:p-4">
       <div className="mx-auto flex w-full max-w-[1440px] items-center justify-between gap-3 rounded-[1.75rem] border border-white/70 bg-white/82 px-3 py-3 shadow-[0_18px_60px_rgba(23,23,23,0.10)] backdrop-blur-2xl sm:px-4">
@@ -367,22 +433,59 @@ function AppHeader({ copy }: { copy: DashboardCopy }) {
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
-          <button className="grid h-10 w-10 place-items-center rounded-full border border-ink/10 bg-white/72 text-ink/58 shadow-sm transition hover:border-ink hover:text-ink" aria-label="Search">
-            <Search size={17} />
-          </button>
-          <button className="hidden h-10 items-center gap-2 rounded-full border border-ink/10 bg-white/72 px-4 text-sm font-bold text-ink/70 shadow-sm transition hover:border-ink hover:text-ink sm:inline-flex">
+          <button
+            type="button"
+            onClick={() => exportCsv(transactions)}
+            disabled={transactions.length === 0}
+            className="hidden h-10 items-center gap-2 rounded-full border border-ink/10 bg-white/72 px-4 text-sm font-bold text-ink/70 shadow-sm transition hover:border-ink hover:text-ink disabled:opacity-40 sm:inline-flex"
+          >
             <Download size={16} />
             Export
           </button>
-          <button className="black-button haptic inline-flex h-10 items-center gap-2 rounded-full px-4 text-sm font-black">
-            <Plus size={16} />
-            <span className="hidden sm:inline">{copy.primaryAction}</span>
-            <span className="sm:hidden">Add</span>
+          {copy.href ? (
+            <HapticLink href={copy.href} className={buttonClass}>
+              {label}
+            </HapticLink>
+          ) : (
+            <button type="button" onClick={() => focusSection(copy.section ?? "")} className={buttonClass}>
+              {label}
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => void signOut({ redirectUrl: "/" })}
+            className="grid h-10 w-10 place-items-center rounded-full border border-ink/10 bg-white/72 text-ink/58 shadow-sm transition hover:border-ink hover:text-ink lg:hidden"
+            aria-label="Sign out"
+          >
+            <LogOut size={16} />
           </button>
         </div>
       </div>
     </header>
   );
+}
+
+function exportCsv(transactions: Transaction[]) {
+  const cell = (value: string) => (/[",\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value);
+  // Prefix user-typed text so spreadsheets don't run it as a formula; amount keeps its leading "-".
+  const text = (value: string) => cell(/^[=+\-@\t\r]/.test(value) ? `'${value}` : value);
+  const rows = transactions.map((item) =>
+    [
+      cell(item.date),
+      text(item.merchant),
+      cell(String(item.kind === "income" ? -item.amount : item.amount)),
+      text(item.category),
+      text(item.account),
+      cell(item.signal),
+      cell(String(item.recurring === true)),
+    ].join(","),
+  );
+  const blob = new Blob([["date,merchant,amount,category,account,signal,recurring", ...rows].join("\n")], { type: "text/csv" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "float-transactions.csv";
+  link.click();
+  URL.revokeObjectURL(link.href);
 }
 
 function MobileNav({ view }: { view: AppView }) {
@@ -685,13 +788,80 @@ function CardLoaderRow({ index }: { index: number }) {
   );
 }
 
-function OverviewView() {
+function useMounted(delay: number) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setMounted(true), 120);
+    const timer = window.setTimeout(() => setMounted(true), delay);
     return () => window.clearTimeout(timer);
-  }, []);
+  }, [delay]);
+
+  return mounted;
+}
+
+// Landing on /app/activity#add-transaction (from another page) focuses the form once the page has revealed.
+function useHashFocus(hash: string, id: string) {
+  useEffect(() => {
+    if (window.location.hash !== hash) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => focusSection(id), 1300);
+    return () => window.clearTimeout(timer);
+  }, [hash, id]);
+}
+
+const panelClass = "cursor-reactive rounded-4xl border border-white/75 bg-white/72 shadow-[0_24px_80px_rgba(23,23,23,0.10)] backdrop-blur-xl";
+
+function EmptyState({
+  icon: Icon,
+  title,
+  body,
+  children,
+  className = "",
+}: {
+  icon: typeof Plus;
+  title: string;
+  body: string;
+  children?: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={`animate-in flex flex-col items-center px-5 py-10 text-center ${className}`}>
+      <span className="grid h-14 w-14 place-items-center rounded-full bg-sky text-ink">
+        <Icon size={22} />
+      </span>
+      <h3 className="font-display display-kern mt-5 text-2xl font-black leading-tight">{title}</h3>
+      <p className="mt-2 max-w-sm text-sm font-medium leading-6 text-ink/52">{body}</p>
+      {children && <div className="mt-5 flex flex-wrap justify-center gap-2">{children}</div>}
+    </div>
+  );
+}
+
+const primaryButton = "black-button haptic inline-flex h-10 items-center justify-center gap-2 rounded-full px-4 text-sm font-black";
+const quietButton =
+  "inline-flex h-10 items-center justify-center gap-2 rounded-full border border-white/80 bg-white/70 px-4 text-sm font-black text-ink/70 shadow-sm transition hover:border-ink hover:text-ink";
+
+function OverviewView({ model }: { model: DashboardModel }) {
+  const mounted = useMounted(120);
+  const { snapshot, safe, lines, transactions } = model;
+  const budgetLeft = lines.length > 0 ? lines.reduce((total, line) => total + line.remaining, 0) : null;
+  const perDay = safe ? floorCents(safe.perDay) : null;
+  const moneyFlow = [
+    { label: "Income this month", value: currency(snapshot.income), icon: Landmark, tone: "bg-mint text-ink" },
+    { label: "Spent this month", value: `${snapshot.spend > 0 ? "-" : ""}${currency(snapshot.spend)}`, icon: ReceiptText, tone: "bg-[#ff9a76] text-ink" },
+    { label: "Budget left", value: budgetLeft === null ? "No budget" : currency(budgetLeft), icon: PiggyBank, tone: "bg-sky text-ink" },
+    { label: "Safe to spend", value: perDay === null ? "Not set" : `${currency(perDay)}/day`, icon: BadgeDollarSign, tone: "bg-[#f9d85f] text-ink" },
+  ];
+  const note = !safe
+    ? "Add a transaction or set a budget and Float works out what you can spend each day."
+    : safe.left <= 0
+      ? safe.basis === "budget"
+        ? "This month's budget is used up, so safe to spend is zero until it resets."
+        : "Spending has caught up with income this month."
+      : safe.basis === "budget"
+        ? `${currency(safe.left)} of budget left, spread over the ${snapshot.daysLeft} ${snapshot.daysLeft === 1 ? "day" : "days"} remaining.`
+        : `${currency(safe.left)} left after this month's income and spending, spread over ${snapshot.daysLeft} ${snapshot.daysLeft === 1 ? "day" : "days"}.`;
 
   return (
     <div className="space-y-4">
@@ -701,18 +871,20 @@ function OverviewView() {
           <div className="relative grid gap-6 lg:grid-cols-[minmax(0,1fr)_220px] lg:items-end">
             <div>
               <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-black text-white/70">June 18</span>
-                <span className="rounded-full bg-mint px-3 py-1 text-xs font-black text-ink">Updated 8:42 AM</span>
+                <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-black text-white/70">{formatDay(model.today)}</span>
+                <span className="rounded-full bg-mint px-3 py-1 text-xs font-black text-ink">
+                  {snapshot.daysLeft} {snapshot.daysLeft === 1 ? "day" : "days"} left
+                </span>
               </div>
               <p className="mt-8 text-sm font-bold text-white/46">Safe to spend today</p>
               <div className="mt-2 flex flex-wrap items-end gap-x-4 gap-y-2">
-                <p className="money-figures font-mono text-7xl font-black leading-none tracking-normal sm:text-8xl">$186</p>
-                <p className="max-w-[18rem] pb-2 text-sm font-semibold leading-5 text-white/48">
-                  After rent, cards, goals, groceries, and weekend plans already claimed their share.
+                <p className="money-figures font-mono text-7xl font-black leading-none tracking-normal sm:text-8xl">
+                  {currency(perDay ?? 0)}
                 </p>
+                <p className="max-w-[18rem] pb-2 text-sm font-semibold leading-5 text-white/48">{note}</p>
               </div>
             </div>
-            <SpendGauge percent={62} mounted={mounted} />
+            <SpendGauge model={model} mounted={mounted} />
           </div>
 
           <div className="relative mt-6 grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -722,54 +894,156 @@ function OverviewView() {
           </div>
         </article>
 
-        <SpendFitCard />
+        <SpendFitCard model={model} />
       </section>
 
-      <section className="grid gap-3 md:grid-cols-3">
-        {actionQueue.map((item, index) => (
-          <PlayfulActionCard key={item.title} item={item} index={index} />
-        ))}
-      </section>
+      {model.actions.length > 0 ? (
+        <section className={`grid gap-3 ${["", "md:grid-cols-1", "md:grid-cols-2", "md:grid-cols-3"][model.actions.length]}`}>
+          {model.actions.map((item, index) => (
+            <PlayfulActionCard key={item.title} item={item} index={index} />
+          ))}
+        </section>
+      ) : (
+        <section {...cursorCardProps} className="cursor-reactive animate-in flex items-center gap-4 rounded-4xl bg-mint p-4 shadow-[0_24px_70px_rgba(23,23,23,0.12)] sm:p-5">
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white/70 text-ink shadow-sm">
+            <ShieldCheck size={18} />
+          </span>
+          <div className="min-w-0">
+            <h3 className="font-display display-kern text-xl font-black leading-tight">All calm.</h3>
+            <p className="mt-1 text-sm font-bold leading-5 text-ink/62">
+              {transactions.length === 0
+                ? "Nothing to flag yet. Log a few transactions and Float will point out what needs attention."
+                : "No budgets near their limit and nothing waiting for review."}
+            </p>
+          </div>
+        </section>
+      )}
 
       <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
-        <BudgetPressure mounted={mounted} />
-        <FeedPreview />
+        <BudgetPressure model={model} mounted={mounted} />
+        <FeedPreview transactions={transactions} />
       </section>
     </div>
   );
 }
 
-function ActivityView() {
+function ActivityView({ model }: { model: DashboardModel }) {
+  const { transactions } = model;
+  const [filter, setFilter] = useState<(typeof activityFilters)[number]>("All");
+  const [query, setQuery] = useState("");
+  const [limit, setLimit] = useState(PAGE_SIZE);
+  useHashFocus("#add-transaction", "add-transaction");
+
+  const needle = query.trim().toLowerCase();
+  const filtered = transactions.filter((item) => {
+    const matchesFilter =
+      filter === "All" ||
+      (filter === "Review" && item.signal === "Review") ||
+      (filter === "Recurring" && item.recurring === true) ||
+      (filter === "Income" && item.kind === "income");
+    const matchesQuery = !needle || `${item.merchant} ${item.category} ${item.account}`.toLowerCase().includes(needle);
+
+    return matchesFilter && matchesQuery;
+  });
+  const reviewCount = transactions.filter((item) => item.signal === "Review").length;
+
   return (
     <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
-      <section {...cursorCardProps} className="cursor-reactive min-w-0 overflow-hidden rounded-4xl border border-white/75 bg-white/72 shadow-[0_24px_80px_rgba(23,23,23,0.10)] backdrop-blur-xl">
+      <section {...cursorCardProps} className={`${panelClass} min-w-0 overflow-hidden`}>
         <div className="flex flex-col gap-3 border-b border-ink/8 p-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h2 className="font-display display-kern text-2xl font-black">Latest activity</h2>
+            <p className="mt-1 text-xs font-bold text-ink/42">
+              {filtered.length} of {transactions.length} {transactions.length === 1 ? "entry" : "entries"}
+            </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            {activityFilters.map((filter, index) => (
+            {activityFilters.map((name) => (
               <button
-                key={filter}
-                className={`h-9 rounded-full px-3 text-xs font-black transition ${index === 0 ? "bg-ink text-white" : "border border-white/75 bg-white/66 text-ink/62 hover:border-ink hover:text-ink"
+                key={name}
+                type="button"
+                aria-pressed={filter === name}
+                onClick={() => {
+                  setFilter(name);
+                  setLimit(PAGE_SIZE);
+                }}
+                className={`h-9 rounded-full px-3 text-xs font-black transition ${filter === name ? "bg-ink text-white" : "border border-white/75 bg-white/66 text-ink/62 hover:border-ink hover:text-ink"
                   }`}
               >
-                {filter}
+                {name}
               </button>
             ))}
           </div>
         </div>
 
-        <div className="grid grid-cols-[minmax(0,1.4fr)_110px_92px] border-b border-ink/8 bg-white/50 px-4 py-3 text-[10px] font-black uppercase tracking-[0.16em] text-ink/45 max-sm:hidden">
-          <span>Merchant</span>
-          <span>State</span>
-          <span className="text-right">Amount</span>
-        </div>
-        <div className="divide-y divide-ink/8">
-          {liveFeed.map((item, index) => (
-            <TransactionRow key={`${item.merchant}-${item.time}`} item={item} index={index} />
-          ))}
-        </div>
+        {transactions.length > 0 && (
+          <div className="border-b border-ink/8 p-3">
+            <label className="flex h-10 items-center gap-2 rounded-full border border-ink/10 bg-white/70 px-4">
+              <Search size={15} className="shrink-0 text-ink/42" />
+              <span className="sr-only">Search transactions</span>
+              <input
+                value={query}
+                onChange={(event) => {
+                  setQuery(event.target.value);
+                  setLimit(PAGE_SIZE);
+                }}
+                placeholder="Search merchant, category, or account"
+                className="min-w-0 flex-1 bg-transparent text-sm font-bold outline-none placeholder:font-semibold placeholder:text-ink/34"
+              />
+            </label>
+          </div>
+        )}
+
+        {transactions.length === 0 ? (
+          <EmptyState
+            icon={ReceiptText}
+            title="Your ledger is empty."
+            body="Add your first transaction or import a bank export. Float builds your daily number from what you log."
+          >
+            <button type="button" onClick={() => focusSection("add-transaction")} className={primaryButton}>
+              <Plus size={16} />
+              Add a transaction
+            </button>
+            <button type="button" onClick={() => focusSection("import-csv")} className={quietButton}>
+              Import a CSV
+            </button>
+          </EmptyState>
+        ) : filtered.length === 0 ? (
+          <EmptyState icon={Search} title="Nothing matches." body="Try a different search or filter.">
+            <button
+              type="button"
+              onClick={() => {
+                setFilter("All");
+                setQuery("");
+              }}
+              className={quietButton}
+            >
+              Clear filters
+            </button>
+          </EmptyState>
+        ) : (
+          <>
+            <div className="grid grid-cols-[2.5rem_minmax(0,1.4fr)_110px_92px_2.25rem] gap-3 border-b border-ink/8 bg-white/50 px-4 py-3 text-[10px] font-black uppercase tracking-[0.16em] text-ink/45 max-sm:hidden">
+              <span />
+              <span>Merchant</span>
+              <span>State</span>
+              <span className="text-right">Amount</span>
+              <span />
+            </div>
+            <div className="divide-y divide-ink/8">
+              {filtered.slice(0, limit).map((item) => (
+                <TransactionRow key={item.id} item={item} deletable />
+              ))}
+            </div>
+            {filtered.length > limit && (
+              <div className="border-t border-ink/8 p-3 text-center">
+                <button type="button" onClick={() => setLimit((current) => current + PAGE_SIZE)} className={quietButton}>
+                  Show more
+                </button>
+              </div>
+            )}
+          </>
+        )}
       </section>
 
       <aside className="space-y-4">
@@ -778,152 +1052,246 @@ function ActivityView() {
             <span className="grid h-10 w-10 place-items-center rounded-full bg-sky text-ink">
               <Zap size={18} />
             </span>
-            <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-black text-white/56">48 active</span>
+            <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-black text-white/56">
+              {transactions.length} {transactions.length === 1 ? "entry" : "entries"}
+            </span>
           </div>
-          <h2 className="font-display display-kern mt-8 text-3xl font-black leading-tight">Most of the feed is already clean.</h2>
+          <h2 className="font-display display-kern mt-8 text-3xl font-black leading-tight">
+            {transactions.length === 0 ? "Start with one entry." : reviewCount > 0 ? `${reviewCount} waiting for review.` : "Everything looks clean."}
+          </h2>
           <p className="mt-3 text-sm font-medium leading-6 text-white/50">
-            Coffee, grocery, payroll, rent, and subscriptions are classified automatically. Price changes still go to review.
+            {transactions.length === 0
+              ? "Log a purchase by hand or import a CSV from your bank. Both land in the same ledger."
+              : reviewCount > 0
+                ? "Charges marked Review are worth a second look before they repeat."
+                : "No charges are flagged. Add or import more to keep your daily number accurate."}
           </p>
         </section>
 
-        <section {...cursorCardProps} className="cursor-reactive rounded-4xl border border-white/75 bg-white/72 p-4 shadow-[0_24px_80px_rgba(23,23,23,0.10)] backdrop-blur-xl">
+        <section id="add-transaction" {...cursorCardProps} className={`${panelClass} scroll-mt-24 p-4`}>
           <div className="flex items-center justify-between">
-            <div>
-              <h2 className="font-display display-kern text-2xl font-black">This week</h2>
-            </div>
-            <ListFilter size={18} className="text-ink/42" />
+            <h2 className="font-display display-kern text-2xl font-black">Add transaction</h2>
+            <Plus size={18} className="text-ink/42" />
           </div>
-          <div className="mt-4 space-y-2">
-            {["Spotify price increased", "Uber is 23% lower", "Trader Joe's on plan", "Payroll matched"].map((item, index) => (
-              <div key={item} {...cursorCardProps} className="cursor-reactive flex items-center gap-3 rounded-[1.25rem] border border-ink/6 bg-white/70 p-3 shadow-sm">
-                <span className={`grid h-8 w-8 place-items-center rounded-full ${index === 0 ? "bg-[#ffcf6e] text-ink" : "bg-mint text-ink"}`}>
-                  {index === 0 ? <TrendingUp size={15} /> : <Check size={15} />}
-                </span>
-                <p className="text-sm font-bold">{item}</p>
-              </div>
-            ))}
+          <AddTransactionForm today={model.today} categories={model.categories} accounts={model.accounts} />
+        </section>
+
+        <section id="import-csv" {...cursorCardProps} className={`${panelClass} scroll-mt-24 p-4`}>
+          <div className="flex items-center justify-between">
+            <h2 className="font-display display-kern text-2xl font-black">Import CSV</h2>
+            <Download size={18} className="text-ink/42" />
           </div>
+          <CsvImport />
         </section>
       </aside>
     </div>
   );
 }
 
-function BudgetsView() {
-  const [mounted, setMounted] = useState(false);
+function BudgetsView({ model }: { model: DashboardModel }) {
+  const mounted = useMounted(140);
+  const [category, setCategory] = useState("");
+  const [limit, setLimit] = useState("");
+  const { lines, snapshot } = model;
+  const ranked = [...lines].sort((a, b) => b.ratio - a.ratio);
+  const budgeted = new Set(lines.map((line) => line.category));
+  const unbudgeted = Object.entries(categorySpend(snapshot.inMonth))
+    .filter(([name]) => !budgeted.has(name))
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5);
+  const tightest = ranked[0];
 
-  useEffect(() => {
-    const timer = window.setTimeout(() => setMounted(true), 140);
-    return () => window.clearTimeout(timer);
-  }, []);
+  function edit(line: BudgetLine) {
+    setCategory(line.category);
+    setLimit(String(line.limit));
+    focusSection("budget-form");
+  }
+
+  function startFor(name: string) {
+    setCategory(name);
+    setLimit("");
+    focusSection("budget-form");
+  }
 
   return (
     <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
-      <section {...cursorCardProps} className="cursor-reactive rounded-4xl border border-white/75 bg-white/72 p-4 shadow-[0_24px_80px_rgba(23,23,23,0.10)] backdrop-blur-xl">
-        <div className="flex flex-col gap-3 border-b border-ink/8 pb-4 md:flex-row md:items-end md:justify-between">
-          <div>
-            <h2 className="font-display display-kern text-2xl font-black">Budget pressure by category</h2>
-          </div>
-          <button className="inline-flex h-10 items-center justify-center gap-2 rounded-full border border-white/80 bg-white/70 px-4 text-sm font-black text-ink/70 shadow-sm transition hover:border-ink hover:text-ink">
-            <SlidersHorizontal size={16} />
-            Edit monthly plan
-          </button>
+      <section {...cursorCardProps} className={`${panelClass} p-4`}>
+        <div className="border-b border-ink/8 pb-4">
+          <h2 className="font-display display-kern text-2xl font-black">Budget pressure by category</h2>
+          <p className="mt-1 text-xs font-bold text-ink/42">This month, by category</p>
         </div>
 
-        <div className="mt-4 grid gap-3">
-          {budgetRooms.map((room, index) => (
-            <BudgetRow key={room.name} room={room} index={index} mounted={mounted} />
-          ))}
-        </div>
+        {ranked.length === 0 ? (
+          <EmptyState
+            icon={Target}
+            title="No budgets yet."
+            body="Pick a category and a monthly limit. Float tracks it against your spending and uses it for your daily number."
+          >
+            <button type="button" onClick={() => focusSection("budget-form")} className={primaryButton}>
+              <Plus size={16} />
+              Set your first budget
+            </button>
+            {unbudgeted.slice(0, 3).map(([name]) => (
+              <button key={name} type="button" onClick={() => startFor(name)} className={quietButton}>
+                {name}
+              </button>
+            ))}
+          </EmptyState>
+        ) : (
+          <div className="mt-4 grid gap-3">
+            {ranked.map((line, index) => (
+              <BudgetRow key={line.id} line={line} index={index} mounted={mounted} onEdit={() => edit(line)} />
+            ))}
+          </div>
+        )}
       </section>
 
       <aside className="space-y-4">
         <section {...cursorCardProps} className="cursor-reactive rounded-4xl bg-[#ffcf6e] p-5 shadow-[0_24px_80px_rgba(23,23,23,0.12)]">
-          <h2 className="font-display display-kern text-3xl font-black leading-tight">Move $60 from shopping to food.</h2>
-          <p className="mt-3 text-sm font-bold leading-6 text-ink/62">
-            Weekend dinner plans are creating pressure. This keeps savings untouched and gives groceries more room.
-          </p>
-          <button className="black-button haptic mt-5 inline-flex h-10 w-full items-center justify-center gap-2 rounded-full px-4 text-sm font-black">
-            Apply change
-            <ArrowRight size={16} />
-          </button>
+          {tightest ? (
+            <>
+              <h2 className="font-display display-kern text-3xl font-black leading-tight">
+                {tightest.category}: {tightest.state.toLowerCase()}.
+              </h2>
+              <p className="mt-3 text-sm font-bold leading-6 text-ink/62">
+                {currency(tightest.used)} of {currency(tightest.limit)} used,{" "}
+                {tightest.remaining >= 0 ? `${currency(tightest.remaining)} left` : `${currency(-tightest.remaining)} over`} with {snapshot.daysLeft}{" "}
+                {snapshot.daysLeft === 1 ? "day" : "days"} to go.
+              </p>
+              <button type="button" onClick={() => edit(tightest)} className="black-button haptic mt-5 inline-flex h-10 w-full items-center justify-center gap-2 rounded-full px-4 text-sm font-black">
+                Adjust limit
+                <ArrowRight size={16} />
+              </button>
+            </>
+          ) : (
+            <>
+              <h2 className="font-display display-kern text-3xl font-black leading-tight">Give your month a shape.</h2>
+              <p className="mt-3 text-sm font-bold leading-6 text-ink/62">
+                Limits turn into a daily number you can trust. Start with the category you spend in most.
+              </p>
+              <button type="button" onClick={() => focusSection("budget-form")} className="black-button haptic mt-5 inline-flex h-10 w-full items-center justify-center gap-2 rounded-full px-4 text-sm font-black">
+                Set a budget
+                <ArrowRight size={16} />
+              </button>
+            </>
+          )}
         </section>
 
-        <section {...cursorCardProps} className="cursor-reactive rounded-4xl border border-white/75 bg-white/72 p-4 shadow-[0_24px_80px_rgba(23,23,23,0.10)] backdrop-blur-xl">
+        <section id="budget-form" {...cursorCardProps} className={`${panelClass} scroll-mt-24 p-4`}>
           <div className="flex items-center justify-between">
-            <div>
-              <h2 className="font-display display-kern text-2xl font-black">Active this week</h2>
-            </div>
+            <h2 className="font-display display-kern text-2xl font-black">Set a limit</h2>
             <Target size={18} className="text-ink/42" />
           </div>
-          <div className="mt-4 space-y-2">
-            {challenges.map((challenge) => (
-              <div key={challenge.title} {...cursorCardProps} className="cursor-reactive rounded-[1.25rem] border border-ink/6 bg-white/70 p-3 shadow-sm">
-                <p className="text-sm font-black">{challenge.title}</p>
-                <div className="mt-2 flex items-center justify-between gap-3">
-                  <span className="text-xs font-bold text-ink/48">{challenge.progress}</span>
-                  <span className="text-xs font-black text-verdant">{challenge.prize}</span>
-                </div>
-              </div>
-            ))}
-          </div>
+          <BudgetForm category={category} limit={limit} onCategory={setCategory} onLimit={setLimit} categories={model.categories} />
         </section>
+
+        {unbudgeted.length > 0 && (
+          <section {...cursorCardProps} className={`${panelClass} p-4`}>
+            <h2 className="font-display display-kern text-2xl font-black">Spending without a budget</h2>
+            <div className="mt-4 space-y-2">
+              {unbudgeted.map(([name, amount]) => (
+                <div key={name} {...cursorCardProps} className="cursor-reactive flex items-center justify-between gap-3 rounded-[1.25rem] border border-ink/6 bg-white/70 p-3 shadow-sm">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-black">{name}</p>
+                    <p className="mt-1 font-mono text-xs font-bold text-ink/48">{currency(amount)} this month</p>
+                  </div>
+                  <button type="button" onClick={() => startFor(name)} className="shrink-0 rounded-full bg-mint px-3 py-1 text-xs font-black text-ink">
+                    Set limit
+                  </button>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
       </aside>
     </div>
   );
 }
 
-function CardsView() {
+function AccountsView({ model }: { model: DashboardModel }) {
+  const { transactions, snapshot } = model;
+  const accounts = accountSummaries(transactions, model.today);
+  const recurring = latestRecurring(transactions);
+  const recurringTotal = recurring.reduce((total, item) => total + item.amount, 0);
+  const recurringShare = snapshot.spend > 0 ? Math.min(100, Math.round((recurringTotal / snapshot.spend) * 100)) : 0;
+  const metrics = [
+    { label: "Accounts", value: String(accounts.length), detail: accounts.length === 0 ? "none tracked yet" : "found in your activity" },
+    { label: "Spent this month", value: currency(Math.round(snapshot.spend)), detail: `across ${accounts.filter((item) => item.monthSpend > 0).length} accounts` },
+    { label: "Recurring", value: currency(Math.round(recurringTotal)), detail: `${recurring.length} ${recurring.length === 1 ? "charge" : "charges"} a month` },
+  ];
+
   return (
     <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
       <div className="space-y-4">
         <section className="grid gap-4 md:grid-cols-3">
-          {cardHealth.map((item, index) => (
+          {metrics.map((item, index) => (
             <MetricPanel key={item.label} item={item} index={index} />
           ))}
         </section>
 
-        <section {...cursorCardProps} className="cursor-reactive overflow-hidden rounded-4xl border border-white/75 bg-white/72 shadow-[0_24px_80px_rgba(23,23,23,0.10)] backdrop-blur-xl">
+        <section {...cursorCardProps} className={`${panelClass} overflow-hidden`}>
           <div className="flex flex-col gap-3 border-b border-ink/8 p-4 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <h2 className="font-display display-kern text-2xl font-black">Balances and payment timing</h2>
+            <h2 className="font-display display-kern text-2xl font-black">Spending by account</h2>
+            <HapticLink href="/app/activity#add-transaction" className={quietButton}>
+              <Plus size={16} />
+              Add transaction
+            </HapticLink>
+          </div>
+          {accounts.length === 0 ? (
+            <EmptyState
+              icon={CreditCard}
+              title="No accounts yet."
+              body="Accounts appear here as you log transactions. Name the account on each one, like Checking or Credit card."
+            >
+              <HapticLink href="/app/activity#add-transaction" className={primaryButton}>
+                <Plus size={16} />
+                Add your first transaction
+              </HapticLink>
+            </EmptyState>
+          ) : (
+            <div className="divide-y divide-ink/8">
+              {accounts.map((account, index) => (
+                <AccountRow
+                  key={account.account}
+                  account={account}
+                  index={index}
+                  share={snapshot.spend > 0 ? Math.round((account.monthSpend / snapshot.spend) * 100) : 0}
+                />
+              ))}
             </div>
-            <button className="inline-flex h-10 items-center justify-center gap-2 rounded-full border border-white/80 bg-white/70 px-4 text-sm font-black text-ink/70 shadow-sm transition hover:border-ink hover:text-ink">
-              <CreditCard size={16} />
-              Manage cards
-            </button>
-          </div>
-          <div className="divide-y divide-ink/8">
-            {cardStack.map((card, index) => (
-              <CardRow key={card.name} card={card} index={index} />
-            ))}
-          </div>
+          )}
         </section>
       </div>
 
       <aside className="space-y-4">
-        <section {...cursorCardProps} className="cursor-reactive rounded-4xl border border-white/75 bg-white/72 p-4 shadow-[0_24px_80px_rgba(23,23,23,0.10)] backdrop-blur-xl">
+        <section {...cursorCardProps} className={`${panelClass} p-4`}>
           <div className="flex items-center justify-between">
-            <div>
-              <h2 className="font-display display-kern text-2xl font-black">Subscriptions this month</h2>
+            <h2 className="font-display display-kern text-2xl font-black">Subscriptions and renewals</h2>
+            <CalendarClock size={18} className="shrink-0 text-ink/42" />
+          </div>
+          {recurring.length === 0 ? (
+            <p className="mt-4 rounded-[1.25rem] border border-ink/6 bg-white/70 p-4 text-sm font-medium leading-6 text-ink/52">
+              Nothing recurring yet. Tick &quot;Repeats every month&quot; when you add a bill or subscription and it shows up here.
+            </p>
+          ) : (
+            <div className="mt-4 space-y-2">
+              {recurring.map((item) => (
+                <SubscriptionRow key={item.id} item={item} />
+              ))}
             </div>
-            <CalendarClock size={18} className="text-ink/42" />
-          </div>
-          <div className="mt-4 space-y-2">
-            {subscriptionStack.map((subscription) => (
-              <SubscriptionRow key={subscription.name} subscription={subscription} />
-            ))}
-          </div>
+          )}
         </section>
 
         <section {...cursorCardProps} className="cursor-reactive card-black rounded-4xl p-5 text-white shadow-[0_34px_100px_rgba(23,23,23,0.20)]">
-          <h2 className="money-figures font-mono text-4xl font-black leading-none">22%</h2>
-          <p className="mt-2 text-sm font-bold text-white/46">utilization across connected cards</p>
+          <h2 className="money-figures font-mono text-4xl font-black leading-none">{recurringShare}%</h2>
+          <p className="mt-2 text-sm font-bold text-white/46">of this month&apos;s spending is recurring</p>
           <div className="mt-5 h-2 overflow-hidden rounded-full bg-white/12">
-            <div className="h-full w-[22%] rounded-full bg-[#8fd6a1]" />
+            <div className="h-full rounded-full bg-[#8fd6a1]" style={{ width: `${recurringShare}%` }} />
           </div>
           <p className="mt-4 text-sm font-medium leading-6 text-white/50">
-            Autopay is on. Travel Card closes in 9 days with no risky balance.
+            {recurring.length === 0
+              ? "Nothing recurring is tracked, so there is nothing quietly renewing."
+              : `${currency(recurringTotal)} renews every month across ${recurring.length} ${recurring.length === 1 ? "charge" : "charges"}.`}
           </p>
         </section>
       </aside>
@@ -931,24 +1299,32 @@ function CardsView() {
   );
 }
 
-function MoneyFlowStep({ item }: { item: (typeof moneyFlow)[number] }) {
+function MoneyFlowStep({ item }: { item: { label: string; value: string; icon: typeof Landmark; tone: string } }) {
   return (
     <div {...cursorCardProps} className="cursor-reactive rounded-[1.2rem] border border-white/10 bg-white/9 p-3">
       <span className={`grid h-9 w-9 place-items-center rounded-full ${item.tone}`}>
         <item.icon size={16} />
       </span>
       <p className="mt-4 text-[10px] font-black uppercase tracking-[0.16em] text-white/36">{item.label}</p>
-      <p className="mt-1 font-mono text-lg font-black tabular-nums">{item.value}</p>
+      <p className="mt-1 truncate font-mono text-lg font-black tabular-nums">{item.value}</p>
     </div>
   );
 }
 
-function SpendGauge({ percent, mounted }: { percent: number; mounted: boolean }) {
+function SpendGauge({ model, mounted }: { model: DashboardModel; mounted: boolean }) {
+  const { snapshot, lines } = model;
+  const percent = Math.min(model.usedPercent, 100);
+  const stats: [string, string][] = [
+    ["Day", `${snapshot.day}/${snapshot.daysInMonth}`],
+    ["Days left", `${snapshot.daysLeft}d`],
+    ["Entries", String(snapshot.inMonth.length)],
+  ];
+
   return (
     <div {...cursorCardProps} className="cursor-reactive rounded-[1.45rem] border border-white/10 bg-white/8 p-4">
       <div className="flex items-center justify-between">
-        <p className="text-xs font-black text-white/54">Month used</p>
-        <p className="font-mono text-sm font-black text-[#f9d85f]">{percent}%</p>
+        <p className="text-xs font-black text-white/54">{lines.length > 0 ? "Budget used" : "Income used"}</p>
+        <p className="font-mono text-sm font-black text-[#f9d85f]">{model.usedPercent}%</p>
       </div>
       <div className="mt-4 h-3 overflow-hidden rounded-full bg-white/12">
         <div
@@ -957,9 +1333,9 @@ function SpendGauge({ percent, mounted }: { percent: number; mounted: boolean })
         />
       </div>
       <div className="mt-4 grid grid-cols-3 gap-2 text-center">
-        {["Payday", "Bills", "Close"].map((label, index) => (
+        {stats.map(([label, value]) => (
           <div key={label} className="rounded-2xl bg-white/8 px-2 py-2">
-            <p className="font-mono text-sm font-black">{index === 0 ? "12d" : index === 1 ? "5d" : "9d"}</p>
+            <p className="font-mono text-sm font-black">{value}</p>
             <p className="mt-1 text-[10px] font-bold text-white/36">{label}</p>
           </div>
         ))}
@@ -968,45 +1344,51 @@ function SpendGauge({ percent, mounted }: { percent: number; mounted: boolean })
   );
 }
 
-function SpendFitCard() {
+function SpendFitCard({ model }: { model: DashboardModel }) {
+  const { safe, snapshot } = model;
+
   return (
     <section {...cursorCardProps} className="cursor-reactive relative overflow-hidden rounded-[2.35rem] border border-white/75 bg-[#ffcf6e] p-5 shadow-[0_24px_80px_rgba(23,23,23,0.12)]">
       <div className="relative">
-        <h2 className="font-display display-kern text-5xl font-black leading-none">Dinner fits.</h2>
+        <h2 className="font-display display-kern text-5xl font-black leading-none">{safe ? "Stay on plan." : "Start here."}</h2>
         <p className="mt-3 max-w-xs text-sm font-bold leading-6 text-ink/62">
-          Keep it under $42 and the weekend still stays green.
+          {safe
+            ? `Keep each day under ${currency(floorCents(safe.perDay))} and the month holds.`
+            : "Log your first transaction or set a budget, and Float turns it into a number for today."}
         </p>
         <div className="mt-8 grid grid-cols-2 gap-2">
           {[
-            ["Tonight", "$42"],
-            ["Weekend", "$186"],
+            ["Last 7 days", currency(model.weekSpend)],
+            [safe?.basis === "budget" ? "Budget left" : "Month left", safe ? currency(Math.max(0, safe.left)) : currency(snapshot.income)],
           ].map(([label, value]) => (
             <div key={label} {...cursorCardProps} className="cursor-reactive rounded-[1.25rem] bg-white/62 p-3 shadow-sm">
               <p className="text-[10px] font-black uppercase tracking-[0.16em] text-ink/42">{label}</p>
-              <p className="mt-3 text-2xl font-black tabular-nums">{value}</p>
+              <p className="mt-3 truncate text-2xl font-black tabular-nums">{value}</p>
             </div>
           ))}
         </div>
-        <button className="black-button haptic mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-full text-sm font-black">
-          Check another plan
+        <HapticLink
+          href={safe ? "/app/activity#add-transaction" : "/app/budgets"}
+          className="black-button haptic mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-full text-sm font-black"
+        >
+          {safe ? "Log a purchase" : "Set a budget"}
           <ArrowRight size={16} />
-        </button>
+        </HapticLink>
       </div>
     </section>
   );
 }
 
-function PlayfulActionCard({ item, index }: { item: (typeof actionQueue)[number]; index: number }) {
-  const styles = [
-    "bg-[#ff9a76]",
-    "bg-sky",
-    "bg-mint",
-  ];
-  const icons = [Bell, PiggyBank, ShieldCheck];
-  const Icon = icons[index % icons.length];
+function PlayfulActionCard({ item, index }: { item: ActionItem; index: number }) {
+  const styles = { urgent: "bg-[#ff9a76]", warn: "bg-[#ffcf6e]", good: "bg-mint" };
+  const Icon = item.tone === "urgent" ? Bell : item.tone === "warn" ? CalendarClock : ShieldCheck;
 
   return (
-    <article {...cursorCardProps} className={`cursor-reactive relative overflow-hidden rounded-4xl p-4 shadow-[0_24px_70px_rgba(23,23,23,0.12)] ${styles[index % styles.length]}`}>
+    <article
+      {...cursorCardProps}
+      style={{ animationDelay: `${index * 55}ms` }}
+      className={`cursor-reactive animate-in relative overflow-hidden rounded-4xl p-4 shadow-[0_24px_70px_rgba(23,23,23,0.12)] ${styles[item.tone]}`}
+    >
       <div className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-white/28" />
       <div className="relative flex min-h-40 flex-col">
         <span className="grid h-11 w-11 place-items-center rounded-full bg-white/70 text-ink shadow-sm">
@@ -1014,10 +1396,10 @@ function PlayfulActionCard({ item, index }: { item: (typeof actionQueue)[number]
         </span>
         <h3 className="font-display display-kern mt-5 text-xl font-black leading-tight">{item.title}</h3>
         <p className="mt-2 text-sm font-bold leading-5 text-ink/62">{item.detail}</p>
-        <button className="mt-auto inline-flex h-9 w-fit items-center gap-2 rounded-full bg-ink px-4 text-xs font-black text-white">
+        <HapticLink href={item.href} className="mt-auto inline-flex h-9 w-fit items-center gap-2 rounded-full bg-ink px-4 text-xs font-black text-white">
           {item.action}
           <ArrowRight size={14} />
-        </button>
+        </HapticLink>
       </div>
     </article>
   );
@@ -1029,9 +1411,9 @@ function MetricPanel({ item, index }: { item: { label: string; value: string; de
   return (
     <article {...cursorCardProps} className="cursor-reactive rounded-4xl border border-white/75 bg-white/72 p-4 shadow-[0_24px_80px_rgba(23,23,23,0.10)] backdrop-blur-xl">
       <div className="flex items-start justify-between gap-3">
-        <div>
+        <div className="min-w-0">
           <p className="text-[10px] font-black uppercase tracking-[0.18em] text-ink/42">{item.label}</p>
-          <p className="mt-4 text-4xl font-black leading-none tabular-nums">{item.value}</p>
+          <p className="mt-4 text-3xl font-black leading-none tabular-nums">{item.value}</p>
           <p className="mt-2 text-sm font-medium text-ink/50">{item.detail}</p>
         </div>
         <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-full ${tones[index % tones.length]}`}>
@@ -1042,150 +1424,142 @@ function MetricPanel({ item, index }: { item: { label: string; value: string; de
   );
 }
 
-function BudgetPressure({ mounted }: { mounted: boolean }) {
+function BudgetPressure({ model, mounted }: { model: DashboardModel; mounted: boolean }) {
+  const top = [...model.lines].sort((a, b) => b.ratio - a.ratio).slice(0, 4);
+
   return (
-    <section {...cursorCardProps} className="cursor-reactive rounded-4xl border border-white/75 bg-white/72 p-4 shadow-[0_24px_80px_rgba(23,23,23,0.10)] backdrop-blur-xl">
+    <section {...cursorCardProps} className={`${panelClass} p-4`}>
       <div className="flex items-center justify-between gap-3">
-        <div>
-          <h2 className="font-display display-kern text-2xl font-black">Categories to watch</h2>
-        </div>
+        <h2 className="font-display display-kern text-2xl font-black">Categories to watch</h2>
         <HapticLink href="/app/budgets" className="inline-flex items-center gap-1 text-sm font-black text-ink/52 transition hover:text-ink">
           Open
           <ChevronRight size={15} />
         </HapticLink>
       </div>
-      <div className="mt-4 grid gap-3 md:grid-cols-2">
-        {budgetRooms.map((room, index) => (
-          <BudgetMini key={room.name} room={room} index={index} mounted={mounted} />
-        ))}
-      </div>
+      {top.length === 0 ? (
+        <EmptyState icon={Target} title="No budgets yet." body="Set a monthly limit for a category and the ones under pressure show up here." className="py-8">
+          <HapticLink href="/app/budgets" className={primaryButton}>
+            Set a budget
+          </HapticLink>
+        </EmptyState>
+      ) : (
+        <div className="mt-4 grid gap-3 md:grid-cols-2">
+          {top.map((line, index) => (
+            <BudgetMini key={line.id} line={line} index={index} mounted={mounted} />
+          ))}
+        </div>
+      )}
     </section>
   );
 }
 
-function BudgetMini({
-  room,
-  index,
-  mounted,
-}: {
-  room: (typeof budgetRooms)[number];
-  index: number;
-  mounted: boolean;
-}) {
-  const color = budgetColor(index);
-
+function BudgetMini({ line, index, mounted }: { line: BudgetLine; index: number; mounted: boolean }) {
   return (
     <div {...cursorCardProps} className="cursor-reactive rounded-[1.25rem] border border-ink/6 bg-white/70 p-3 shadow-sm">
       <div className="flex items-center justify-between gap-3">
-        <div>
-          <p className="text-sm font-black">{room.name}</p>
-          <p className="mt-1 text-xs font-bold text-ink/48">{room.spent} of {room.limit}</p>
+        <div className="min-w-0">
+          <p className="truncate text-sm font-black">{line.category}</p>
+          <p className="mt-1 text-xs font-bold text-ink/48">
+            {currency(line.used)} of {currency(line.limit)}
+          </p>
         </div>
-        <span className={`rounded-full px-2 py-1 text-xs font-black ${room.percent > 80 ? "bg-[#ffcf6e] text-ink" : "bg-mint text-ink"}`}>
-          {room.percent}%
-        </span>
+        <span className={`shrink-0 rounded-full px-2 py-1 text-xs font-black text-ink ${stateTone(line.state)}`}>{line.percent}%</span>
       </div>
       <div className="mt-3 h-2 overflow-hidden rounded-full bg-ink/8">
-        <div className={`h-full rounded-full ${color}`} style={{ width: mounted ? `${room.percent}%` : "0%" }} />
+        <div className={`h-full rounded-full ${budgetColor(index)}`} style={{ width: mounted ? `${Math.min(line.percent, 100)}%` : "0%" }} />
       </div>
     </div>
   );
 }
 
-function FeedPreview() {
+function FeedPreview({ transactions }: { transactions: Transaction[] }) {
   return (
-    <section {...cursorCardProps} className="cursor-reactive overflow-hidden rounded-4xl border border-white/75 bg-white/72 shadow-[0_24px_80px_rgba(23,23,23,0.10)] backdrop-blur-xl">
+    <section {...cursorCardProps} className={`${panelClass} overflow-hidden`}>
       <div className="flex items-center justify-between border-b border-ink/8 p-4">
-        <div>
-          <h2 className="font-display display-kern text-2xl font-black">Latest moves</h2>
-        </div>
+        <h2 className="font-display display-kern text-2xl font-black">Latest moves</h2>
         <HapticLink href="/app/activity" className="inline-flex items-center gap-1 text-sm font-black text-ink/52 transition hover:text-ink">
           View all
           <ChevronRight size={15} />
         </HapticLink>
       </div>
-      <div className="divide-y divide-ink/8">
-        {liveFeed.slice(0, 4).map((item, index) => (
-          <TransactionRow key={`${item.merchant}-${item.time}`} item={item} index={index} compact />
-        ))}
-      </div>
+      {transactions.length === 0 ? (
+        <EmptyState icon={ReceiptText} title="Nothing logged yet." body="Your newest transactions land here." className="py-8">
+          <HapticLink href="/app/activity#add-transaction" className={primaryButton}>
+            Add one
+          </HapticLink>
+        </EmptyState>
+      ) : (
+        <div className="divide-y divide-ink/8">
+          {transactions.slice(0, 4).map((item) => (
+            <TransactionRow key={item.id} item={item} compact />
+          ))}
+        </div>
+      )}
     </section>
   );
 }
 
-function TransactionRow({
-  item,
-  index,
-  compact = false,
-}: {
-  item: (typeof liveFeed)[number];
-  index: number;
-  compact?: boolean;
-}) {
-  const isIncome = item.amount.startsWith("+");
-  const tone = transactionTone(item.tone);
+function TransactionRow({ item, compact = false, deletable = false }: { item: Transaction; compact?: boolean; deletable?: boolean }) {
+  const isIncome = item.kind === "income";
+  const tone = isIncome ? "bg-mint text-ink" : item.signal === "Review" ? "bg-[#ffcf6e] text-ink" : item.signal === "Watch" ? "bg-sky text-ink" : "bg-mint text-ink";
+  const state = item.signal === "Review" ? "Review" : item.recurring ? "Recurring" : isIncome ? "Income" : item.signal;
 
   return (
-    <div {...cursorCardProps} className={`cursor-reactive grid gap-3 p-4 transition hover:bg-white/55 ${compact ? "grid-cols-[auto_1fr_auto]" : "grid-cols-[auto_1fr_auto] sm:grid-cols-[auto_minmax(0,1.4fr)_110px_92px]"}`}>
-      <span className={`grid h-10 w-10 place-items-center rounded-full ${tone}`}>
-        {isIncome ? <ArrowDownLeft size={17} /> : <ArrowUpRight size={17} />}
-      </span>
+    <div
+      {...cursorCardProps}
+      className={`cursor-reactive grid items-center gap-3 p-4 transition hover:bg-white/55 ${compact ? "grid-cols-[auto_1fr_auto]" : "grid-cols-[auto_1fr_auto] sm:grid-cols-[2.5rem_minmax(0,1.4fr)_110px_92px_2.25rem]"}`}
+    >
+      <span className={`grid h-10 w-10 place-items-center rounded-full ${tone}`}>{isIncome ? <ArrowDownLeft size={17} /> : <ArrowUpRight size={17} />}</span>
       <div className="min-w-0">
         <p className="truncate text-sm font-black">{item.merchant}</p>
-        <p className="mt-1 text-xs font-medium text-ink/46">
-          {item.category} / {item.time}
+        <p className="mt-1 truncate text-xs font-medium text-ink/46">
+          {item.category} / {compact ? "" : `${item.account} / `}
+          {formatDay(item.date)}
         </p>
       </div>
       {!compact && (
-        <span className="hidden h-8 items-center justify-center rounded-full bg-white/70 px-3 text-xs font-black text-ink/56 shadow-sm sm:flex">
-          {item.status}
-        </span>
+        <span className="hidden h-8 items-center justify-center rounded-full bg-white/70 px-3 text-xs font-black text-ink/56 shadow-sm sm:flex">{state}</span>
       )}
       <div className="text-right">
-        <p className={`font-mono text-sm font-black tabular-nums ${isIncome ? "text-verdant" : "text-ink"}`}>{item.amount}</p>
-        {!compact && <p className="mt-1 text-[10px] font-bold text-ink/36">#{index + 1}</p>}
+        <p className={`font-mono text-sm font-black tabular-nums ${isIncome ? "text-verdant" : "text-ink"}`}>
+          {isIncome ? "+" : "-"}
+          {currency(item.amount)}
+        </p>
       </div>
+      {!compact && (deletable ? <DeleteButton id={item.id} label={item.merchant} kind="transaction" /> : <span className="max-sm:hidden" />)}
     </div>
   );
 }
 
-function BudgetRow({
-  room,
-  index,
-  mounted,
-}: {
-  room: (typeof budgetRooms)[number];
-  index: number;
-  mounted: boolean;
-}) {
-  const color = budgetColor(index);
-  const state = room.percent >= 82 ? "Tight" : room.percent >= 70 ? "Watch" : "Healthy";
-
+function BudgetRow({ line, index, mounted, onEdit }: { line: BudgetLine; index: number; mounted: boolean; onEdit: () => void }) {
   return (
     <article {...cursorCardProps} className="cursor-reactive grid gap-3 rounded-[1.35rem] border border-ink/6 bg-white/70 p-4 shadow-sm md:grid-cols-[minmax(0,1fr)_140px] md:items-center">
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-2">
-          <h3 className="text-base font-black">{room.name}</h3>
-          <span className={`rounded-full px-2 py-1 text-xs font-black ${state === "Tight" ? "bg-[#ff9a76] text-ink" : state === "Watch" ? "bg-[#ffcf6e] text-ink" : "bg-mint text-ink"}`}>
-            {state}
-          </span>
+          <h3 className="truncate text-base font-black">{line.category}</h3>
+          <span className={`rounded-full px-2 py-1 text-xs font-black text-ink ${stateTone(line.state)}`}>{line.state}</span>
+          <button type="button" onClick={onEdit} className="rounded-full px-2 py-1 text-xs font-black text-ink/48 transition hover:bg-ink/8 hover:text-ink">
+            Edit
+          </button>
+          <DeleteButton id={line.id} label={`${line.category} budget`} kind="budget" />
         </div>
-        <p className="mt-1 text-sm font-medium text-ink/50">{room.vibe}</p>
+        <p className="mt-1 text-sm font-medium text-ink/50">
+          {line.remaining >= 0 ? `${currency(line.remaining)} left this month` : `${currency(-line.remaining)} over this month`}
+        </p>
         <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-ink/8">
-          <div className={`h-full rounded-full ${color} transition-[width] duration-700`} style={{ width: mounted ? `${room.percent}%` : "0%" }} />
+          <div className={`h-full rounded-full ${budgetColor(index)} transition-[width] duration-700`} style={{ width: mounted ? `${Math.min(line.percent, 100)}%` : "0%" }} />
         </div>
       </div>
       <div className="text-left md:text-right">
-        <p className="font-mono text-2xl font-black tabular-nums">{room.spent}</p>
-        <p className="mt-1 text-xs font-bold text-ink/46">of {room.limit}</p>
-        <p className="mt-2 text-xs font-black text-ink/62">{room.percent}% used</p>
+        <p className="font-mono text-2xl font-black tabular-nums">{currency(line.used)}</p>
+        <p className="mt-1 text-xs font-bold text-ink/46">of {currency(line.limit)}</p>
+        <p className="mt-2 text-xs font-black text-ink/62">{line.percent}% used</p>
       </div>
     </article>
   );
 }
 
-function CardRow({ card, index }: { card: (typeof cardStack)[number]; index: number }) {
-  const due = index === 0 ? "Due in 14d" : index === 1 ? "Closes in 9d" : "Savings";
+function AccountRow({ account, index, share }: { account: { account: string; monthSpend: number; count: number }; index: number; share: number }) {
   const tone = index === 0 ? "card-mint" : index === 1 ? "card-blue" : "card-black text-white";
 
   return (
@@ -1195,35 +1569,37 @@ function CardRow({ card, index }: { card: (typeof cardStack)[number]; index: num
           <CreditCard size={19} />
         </span>
         <div className="min-w-0">
-          <p className="truncate text-base font-black">{card.name}</p>
-          <p className="mt-1 font-mono text-xs font-bold text-ink/45">Card ending {card.digits} / {card.network}</p>
+          <p className="truncate text-base font-black">{account.account}</p>
+          <p className="mt-1 font-mono text-xs font-bold text-ink/45">
+            {account.count} {account.count === 1 ? "transaction" : "transactions"}
+          </p>
         </div>
       </div>
       <div>
-        <p className="text-xs font-black uppercase tracking-[0.16em] text-ink/38">Balance</p>
-        <p className="mt-1 font-mono text-base font-black">{card.balance}</p>
+        <p className="text-xs font-black uppercase tracking-[0.16em] text-ink/38">This month</p>
+        <p className="mt-1 font-mono text-base font-black">{currency(account.monthSpend)}</p>
       </div>
       <div className="md:text-right">
-        <span className="inline-flex h-8 items-center rounded-full bg-white/70 px-3 text-xs font-black text-ink/62 shadow-sm">{due}</span>
+        <span className="inline-flex h-8 items-center rounded-full bg-white/70 px-3 text-xs font-black text-ink/62 shadow-sm">{share}% of spend</span>
       </div>
     </div>
   );
 }
 
-function SubscriptionRow({ subscription }: { subscription: (typeof subscriptionStack)[number] }) {
-  const risky = subscription.action === "Pause" || subscription.action === "Review";
+function SubscriptionRow({ item }: { item: Transaction }) {
+  const review = item.signal === "Review";
 
   return (
     <div {...cursorCardProps} className="cursor-reactive grid grid-cols-[1fr_auto] gap-3 rounded-[1.25rem] border border-ink/6 bg-white/70 p-3 shadow-sm">
       <div className="min-w-0">
-        <p className="truncate text-sm font-black">{subscription.name}</p>
-        <p className="mt-1 text-xs font-medium text-ink/48">{subscription.note}</p>
+        <p className="truncate text-sm font-black">{item.merchant}</p>
+        <p className="mt-1 truncate text-xs font-medium text-ink/48">
+          Last charged {formatDay(item.date)} / {item.account}
+        </p>
       </div>
       <div className="text-right">
-        <p className="font-mono text-sm font-black">{subscription.price}</p>
-        <button className={`mt-2 rounded-full px-3 py-1 text-xs font-black ${risky ? "bg-[#ffcf6e] text-ink" : "bg-mint text-ink"}`}>
-          {subscription.action}
-        </button>
+        <p className="font-mono text-sm font-black">{currency(item.amount)}</p>
+        <span className={`mt-2 inline-block rounded-full px-3 py-1 text-xs font-black text-ink ${review ? "bg-[#ffcf6e]" : "bg-mint"}`}>{review ? "Review" : "Active"}</span>
       </div>
     </div>
   );
@@ -1233,18 +1609,6 @@ function budgetColor(index: number) {
   return ["bg-sky", "bg-[#ffcf6e]", "bg-[#ff9a76]", "bg-mint"][index % 4];
 }
 
-function transactionTone(tone: string) {
-  if (tone === "good") {
-    return "bg-mint text-ink";
-  }
-
-  if (tone === "warn") {
-    return "bg-[#ffcf6e] text-ink";
-  }
-
-  if (tone === "pink") {
-    return "bg-[#ff9a76] text-ink";
-  }
-
-  return "bg-sky text-ink";
+function stateTone(state: BudgetLine["state"]) {
+  return state === "Over" || state === "Tight" ? "bg-[#ff9a76]" : state === "Watch" ? "bg-[#ffcf6e]" : "bg-mint";
 }

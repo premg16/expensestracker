@@ -1,5 +1,5 @@
-import { PersonalDashboard } from "@/components/personal-dashboard";
+import { AppScreen } from "@/components/app-screen";
 
 export default function AppPage() {
-  return <PersonalDashboard view="overview" />;
+  return <AppScreen view="overview" />;
 }

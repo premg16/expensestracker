@@ -1,14 +1,5 @@
 "use client";
 
-import { budgets, transactions } from "@/lib/finance-data";
-import {
-  budgetRooms,
-  cardStack,
-  liveFeed,
-  moneyMood,
-  subscriptionStack,
-  userProfile,
-} from "@/lib/spendpilot-data";
 import {
   Bot,
   CalendarClock,
@@ -57,14 +48,14 @@ const viewLabels: Record<AppView, string> = {
   overview: "Daily command",
   activity: "Activity ledger",
   budgets: "Budget control",
-  cards: "Cards and renewals",
+  cards: "Accounts and renewals",
 };
 
 const promptsByView: Record<AppView, string[]> = {
   overview: ["Can I spend tonight?", "What changed today?", "Find waste"],
   activity: ["Which charge is odd?", "Explain review items", "Create a cleanup list"],
   budgets: ["Where am I tight?", "Plan a $500 save", "What should I move?"],
-  cards: ["Review subscriptions", "Any card risk?", "What bill is next?"],
+  cards: ["Review subscriptions", "Which account spends most?", "What repeats monthly?"],
 };
 
 const moodCopy: Record<CompanionMood, { label: string; className: string; dot: string }> = {
@@ -88,11 +79,11 @@ const moodCopy: Record<CompanionMood, { label: string; className: string; dot: s
 const starterMessage: CompanionMessage = {
   id: "starter",
   role: "companion",
-  text: "I can read the visible money context and give you one clear next move.",
+  text: "Ask about your spending, budgets, or recurring charges. I read your saved transactions and give you one clear next move.",
   mood: "calm",
   confidence: "Ready",
   actions: ["Ask about tonight", "Find waste", "Plan savings"],
-  insights: ["Safe-to-spend is $186", "Groceries and renewals need the closest watch"],
+  insights: ["Answers use only your own data", "Up to 50 questions a day"],
 };
 
 export function FloatingFinanceCompanion({ view }: { view: AppView }) {
@@ -148,12 +139,26 @@ export function FloatingFinanceCompanion({ view }: { view: AppView }) {
         },
         body: JSON.stringify({
           message: trimmed,
-          transactions,
-          budgets,
           context: buildMoneyContext(view),
           stream: true,
         }),
       });
+
+      if (!response.ok) {
+        const failure = (await response.json().catch(() => ({}))) as { error?: string; message?: string };
+        updateCompanionMessage(companionId, {
+          text:
+            failure.message ??
+            (response.status === 401 ? "Your session expired. Sign in again to keep chatting." : "The companion could not answer right now. Try again soon."),
+          mood: response.status === 429 ? "watch" : "urgent",
+          confidence: response.status === 429 ? "Daily limit reached" : "Unavailable",
+          actions: [],
+          insights: [],
+          cards: [],
+          streaming: false,
+        });
+        return;
+      }
 
       if (!response.body) {
         const data = (await response.json()) as CompanionResponse;
@@ -511,16 +516,7 @@ function cardTone(tone: CompanionCard["tone"]) {
 }
 
 function buildMoneyContext(view: AppView) {
-  return {
-    page: viewLabels[view],
-    user: userProfile,
-    safeToSpend: "$186",
-    moneyMood,
-    liveFeed,
-    budgetRooms,
-    subscriptionStack,
-    cardStack,
-  };
+  return { page: viewLabels[view] };
 }
 
 function normalizeList(value: unknown, fallback: string[]) {

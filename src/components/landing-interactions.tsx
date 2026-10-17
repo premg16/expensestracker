@@ -6,6 +6,7 @@ export function LandingInteractionShell({ children }: { children: ReactNode }) {
   const rootRef = useRef<HTMLElement | null>(null);
 
   useLandingReveals(rootRef);
+  useLandingAnchorNavigation(rootRef);
   useHeaderScroll(rootRef);
   useProblemScroll(rootRef);
   useQuestionScroll(rootRef);
@@ -19,6 +20,48 @@ export function LandingInteractionShell({ children }: { children: ReactNode }) {
       {children}
     </main>
   );
+}
+
+function useLandingAnchorNavigation(rootRef: RefObject<HTMLElement | null>) {
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root) {
+      return;
+    }
+
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+    const onClick = (event: MouseEvent) => {
+      if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) {
+        return;
+      }
+
+      const anchor =
+        event.target instanceof Element ? event.target.closest<HTMLAnchorElement>("a[href^='#']") : null;
+      if (!anchor) {
+        return;
+      }
+
+      const id = decodeURIComponent(anchor.hash.slice(1));
+      const target = id ? document.getElementById(id) : null;
+      if (!target || !root.contains(target)) {
+        return;
+      }
+
+      event.preventDefault();
+
+      const scrollable = Math.max(0, target.offsetHeight - window.innerHeight);
+      const anchorProgress = Number(target.dataset.anchorProgress ?? "0");
+      const top = target.offsetTop + scrollable * Math.max(0, Math.min(1, anchorProgress));
+
+      window.history.pushState(null, "", `${window.location.pathname}${window.location.search}#${id}`);
+      window.scrollTo({ top, behavior: reduceMotion.matches ? "auto" : "smooth" });
+    };
+
+    root.addEventListener("click", onClick);
+
+    return () => root.removeEventListener("click", onClick);
+  }, [rootRef]);
 }
 
 function useHeaderScroll(rootRef: RefObject<HTMLElement | null>) {
@@ -135,19 +178,19 @@ function useProblemScroll(rootRef: RefObject<HTMLElement | null>) {
     let frame = 0;
 
     const getStage = (progress: number) => {
-      if (progress < 0.08) {
+      if (progress < 0.03) {
         return { stageName: "prelude", step: "-1" };
       }
-      if (progress < 0.42) {
+      if (progress < 0.3) {
         return { stageName: "title", step: "-1" };
       }
-      if (progress < 0.56) {
+      if (progress < 0.46) {
         return { stageName: "dock", step: "-1" };
       }
-      if (progress < 0.72) {
+      if (progress < 0.65) {
         return { stageName: "step-1", step: "0" };
       }
-      if (progress < 0.86) {
+      if (progress < 0.82) {
         return { stageName: "step-2", step: "1" };
       }
       return { stageName: "step-3", step: "2" };
@@ -158,11 +201,12 @@ function useProblemScroll(rootRef: RefObject<HTMLElement | null>) {
       const rect = section.getBoundingClientRect();
       const scrollable = Math.max(1, rect.height - window.innerHeight);
       const progress = Math.max(0, Math.min(1, -rect.top / scrollable));
+      const introProgress = Math.max(progress, 0.24);
       const { stageName, step } = getStage(progress);
-      const eyebrowProgress = range(progress, 0, 0.18);
-      const titleProgress = range(progress, 0.08, 0.4);
-      const dockProgress = range(progress, 0.42, 0.56);
-      const contentProgress = range(progress, 0.52, 1);
+      const eyebrowProgress = range(introProgress, 0, 0.12);
+      const titleProgress = range(introProgress, 0, 0.22);
+      const dockProgress = range(progress, 0.3, 0.46);
+      const contentProgress = range(progress, 0.43, 1);
 
       stage.dataset.problemStage = stageName;
       stage.dataset.problemStep = step;
@@ -233,19 +277,19 @@ function useQuestionScroll(rootRef: RefObject<HTMLElement | null>) {
     let frame = 0;
 
     const getStage = (progress: number) => {
-      if (progress < 0.08) {
+      if (progress < 0.03) {
         return { stageName: "prelude", step: "-1" };
       }
-      if (progress < 0.42) {
+      if (progress < 0.3) {
         return { stageName: "title", step: "-1" };
       }
-      if (progress < 0.56) {
+      if (progress < 0.46) {
         return { stageName: "dock", step: "-1" };
       }
-      if (progress < 0.72) {
+      if (progress < 0.65) {
         return { stageName: "question-1", step: "0" };
       }
-      if (progress < 0.86) {
+      if (progress < 0.82) {
         return { stageName: "question-2", step: "1" };
       }
       return { stageName: "question-3", step: "2" };
@@ -256,12 +300,13 @@ function useQuestionScroll(rootRef: RefObject<HTMLElement | null>) {
       const rect = section.getBoundingClientRect();
       const scrollable = Math.max(1, rect.height - window.innerHeight);
       const progress = Math.max(0, Math.min(1, -rect.top / scrollable));
+      const introProgress = Math.max(progress, 0.24);
       const { stageName, step } = getStage(progress);
-      const eyebrowProgress = range(progress, 0, 0.18);
-      const titleProgress = range(progress, 0.08, 0.4);
-      const dockProgress = range(progress, 0.42, 0.56);
-      const boardProgress = range(progress, 0.42, 0.56);
-      const contentProgress = range(progress, 0.52, 1);
+      const eyebrowProgress = range(introProgress, 0, 0.12);
+      const titleProgress = range(introProgress, 0, 0.22);
+      const dockProgress = range(progress, 0.3, 0.46);
+      const boardProgress = range(progress, 0.3, 0.46);
+      const contentProgress = range(progress, 0.43, 1);
 
       stage.dataset.questionStage = stageName;
       stage.dataset.questionStep = step;
@@ -333,22 +378,22 @@ function useBriefScroll(rootRef: RefObject<HTMLElement | null>) {
     let frame = 0;
 
     const getStage = (progress: number) => {
-      if (progress < 0.08) {
+      if (progress < 0.03) {
         return { stageName: "prelude", step: "-1" };
       }
-      if (progress < 0.34) {
+      if (progress < 0.26) {
         return { stageName: "title", step: "-1" };
       }
-      if (progress < 0.48) {
+      if (progress < 0.42) {
         return { stageName: "dock", step: "-1" };
       }
-      if (progress < 0.62) {
+      if (progress < 0.56) {
         return { stageName: "brief-1", step: "0" };
       }
-      if (progress < 0.76) {
+      if (progress < 0.7) {
         return { stageName: "brief-2", step: "1" };
       }
-      if (progress < 0.9) {
+      if (progress < 0.84) {
         return { stageName: "brief-3", step: "2" };
       }
       return { stageName: "brief-4", step: "3" };
@@ -359,12 +404,13 @@ function useBriefScroll(rootRef: RefObject<HTMLElement | null>) {
       const rect = section.getBoundingClientRect();
       const scrollable = Math.max(1, rect.height - window.innerHeight);
       const progress = Math.max(0, Math.min(1, -rect.top / scrollable));
+      const introProgress = Math.max(progress, 0.24);
       const { stageName, step } = getStage(progress);
-      const eyebrowProgress = range(progress, 0, 0.16);
-      const titleProgress = range(progress, 0.08, 0.32);
-      const dockProgress = range(progress, 0.36, 0.5);
-      const boardProgress = range(progress, 0.36, 0.5);
-      const contentProgress = range(progress, 0.48, 1);
+      const eyebrowProgress = range(introProgress, 0, 0.12);
+      const titleProgress = range(introProgress, 0, 0.22);
+      const dockProgress = range(progress, 0.28, 0.42);
+      const boardProgress = range(progress, 0.28, 0.42);
+      const contentProgress = range(progress, 0.4, 1);
 
       stage.dataset.briefStage = stageName;
       stage.dataset.briefStep = step;
@@ -434,19 +480,19 @@ function useSocialProofScroll(rootRef: RefObject<HTMLElement | null>) {
     let frame = 0;
 
     const getStage = (progress: number) => {
-      if (progress < 0.08) {
+      if (progress < 0.03) {
         return { stageName: "prelude", step: "-1" };
       }
-      if (progress < 0.42) {
+      if (progress < 0.3) {
         return { stageName: "title", step: "-1" };
       }
-      if (progress < 0.56) {
+      if (progress < 0.46) {
         return { stageName: "dock", step: "-1" };
       }
-      if (progress < 0.72) {
+      if (progress < 0.65) {
         return { stageName: "proof-1", step: "0" };
       }
-      if (progress < 0.86) {
+      if (progress < 0.82) {
         return { stageName: "proof-2", step: "1" };
       }
       return { stageName: "proof-3", step: "2" };
@@ -457,11 +503,12 @@ function useSocialProofScroll(rootRef: RefObject<HTMLElement | null>) {
       const rect = section.getBoundingClientRect();
       const scrollable = Math.max(1, rect.height - window.innerHeight);
       const progress = Math.max(0, Math.min(1, -rect.top / scrollable));
+      const introProgress = Math.max(progress, 0.24);
       const { stageName, step } = getStage(progress);
-      const eyebrowProgress = range(progress, 0, 0.18);
-      const titleProgress = range(progress, 0.08, 0.4);
-      const dockProgress = range(progress, 0.42, 0.56);
-      const cardProgress = range(progress, 0.52, 1);
+      const eyebrowProgress = range(introProgress, 0, 0.12);
+      const titleProgress = range(introProgress, 0, 0.22);
+      const dockProgress = range(progress, 0.3, 0.46);
+      const cardProgress = range(progress, 0.43, 1);
 
       stage.dataset.socialStage = stageName;
       stage.dataset.socialStep = step;
@@ -531,19 +578,19 @@ function useTrustScroll(rootRef: RefObject<HTMLElement | null>) {
     let frame = 0;
 
     const getStage = (progress: number) => {
-      if (progress < 0.08) {
+      if (progress < 0.03) {
         return { stageName: "prelude", step: "-1" };
       }
-      if (progress < 0.42) {
+      if (progress < 0.3) {
         return { stageName: "title", step: "-1" };
       }
-      if (progress < 0.56) {
+      if (progress < 0.46) {
         return { stageName: "dock", step: "-1" };
       }
-      if (progress < 0.72) {
+      if (progress < 0.65) {
         return { stageName: "trust-1", step: "0" };
       }
-      if (progress < 0.86) {
+      if (progress < 0.82) {
         return { stageName: "trust-2", step: "1" };
       }
       return { stageName: "trust-3", step: "2" };
@@ -554,12 +601,13 @@ function useTrustScroll(rootRef: RefObject<HTMLElement | null>) {
       const rect = section.getBoundingClientRect();
       const scrollable = Math.max(1, rect.height - window.innerHeight);
       const progress = Math.max(0, Math.min(1, -rect.top / scrollable));
+      const introProgress = Math.max(progress, 0.24);
       const { stageName, step } = getStage(progress);
-      const eyebrowProgress = range(progress, 0, 0.18);
-      const titleProgress = range(progress, 0.08, 0.4);
-      const dockProgress = range(progress, 0.42, 0.56);
-      const boardProgress = range(progress, 0.42, 0.56);
-      const contentProgress = range(progress, 0.52, 1);
+      const eyebrowProgress = range(introProgress, 0, 0.12);
+      const titleProgress = range(introProgress, 0, 0.22);
+      const dockProgress = range(progress, 0.3, 0.46);
+      const boardProgress = range(progress, 0.3, 0.46);
+      const contentProgress = range(progress, 0.43, 1);
 
       stage.dataset.trustStage = stageName;
       stage.dataset.trustStep = step;

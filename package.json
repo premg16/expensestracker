@@ -7,12 +7,16 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "db:push": "dotenv -e .env.local -- drizzle-kit push",
+    "db:studio": "dotenv -e .env.local -- drizzle-kit studio"
   },
   "dependencies": {
+    "@clerk/nextjs": "^7.9.17",
+    "@neondatabase/serverless": "^1.2.0",
+    "drizzle-orm": "^0.45.4",
     "lucide-react": "latest",
-    "next": "latest",
-    "next-auth": "^4.24.14",
+    "next": "^16.4.2",
     "openai": "^6.44.0",
     "react": "latest",
     "react-dom": "latest"
@@ -22,8 +26,10 @@
     "@types/node": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest",
+    "dotenv-cli": "^11.0.0",
+    "drizzle-kit": "^0.31.11",
     "eslint": "^9",
-    "eslint-config-next": "latest",
+    "eslint-config-next": "^16.4.2",
     "tailwindcss": "latest",
     "typescript": "latest"
   }

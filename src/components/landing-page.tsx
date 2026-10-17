@@ -1,6 +1,6 @@
 import { HapticLink } from "@/components/haptic-link";
 import { LandingInteractionShell } from "@/components/landing-interactions";
-import { testimonials } from "@/lib/spendpilot-data";
+import { testimonials } from "@/lib/float-data";
 import {
   ArrowRight,
   Bell,
@@ -314,7 +314,8 @@ function ProblemSection() {
     <section
       id="story"
       data-problem-scroll="true"
-      className="problem-story relative h-[430svh] scroll-mt-0"
+      data-anchor-progress="0.5"
+      className="problem-story relative h-[330svh] scroll-mt-0"
     >
       <div
         data-problem-stage="prelude"
@@ -453,7 +454,7 @@ function ProblemSection() {
 
 function LifestyleSection() {
   return (
-    <section data-question-scroll="true" className="question-story relative h-[430svh] scroll-mt-0">
+    <section data-question-scroll="true" className="question-story relative h-[330svh] scroll-mt-0">
       <div
         data-question-stage="prelude"
         data-question-step="-1"
@@ -509,9 +510,8 @@ function LifestyleSection() {
                     <p className="mt-3 text-lg font-bold text-ink/56">{scene.answerLabel}</p>
                   </div>
                   <span
-                    className={`grid h-16 w-16 shrink-0 place-items-center rounded-full ${
-                      scene.tone === "gold" ? "bg-[#ffcf6e]" : scene.tone === "mint" ? "bg-mint" : "bg-sky"
-                    }`}
+                    className={`grid h-16 w-16 shrink-0 place-items-center rounded-full ${scene.tone === "gold" ? "bg-[#ffcf6e]" : scene.tone === "mint" ? "bg-mint" : "bg-sky"
+                      }`}
                   >
                     {scene.step}
                   </span>
@@ -555,15 +555,14 @@ function LifestyleSection() {
 function QuestionRow({ label, value, tone }: { label: string; value: string; tone: "blue" | "dark" | "light" | "mint" }) {
   return (
     <div
-      className={`question-row flex items-center justify-between rounded-[1.25rem] px-4 py-3 ${
-        tone === "dark"
+      className={`question-row flex items-center justify-between rounded-[1.25rem] px-4 py-3 ${tone === "dark"
           ? "bg-ink text-white"
           : tone === "blue"
             ? "bg-sky text-ink"
             : tone === "mint"
               ? "bg-mint text-ink"
               : "bg-white/82 text-ink"
-      }`}
+        }`}
     >
       <span className="font-black">{label}</span>
       <span className={`money-figures font-black ${tone === "dark" ? "text-white" : "text-ink"}`}>{value}</span>
@@ -573,7 +572,7 @@ function QuestionRow({ label, value, tone }: { label: string; value: string; ton
 
 function FeatureSection() {
   return (
-    <section id="features" data-brief-scroll="true" className="brief-story relative h-[520svh] scroll-mt-0">
+    <section id="features" data-brief-scroll="true" data-anchor-progress="0.46" className="brief-story relative h-[380svh] scroll-mt-0">
       <div
         data-brief-stage="prelude"
         data-brief-step="-1"
@@ -629,15 +628,14 @@ function FeatureSection() {
                         <p className="mt-3 text-sm font-semibold text-white/62">{scene.metricLabel}</p>
                       </div>
                       <span
-                        className={`grid h-15 w-15 shrink-0 place-items-center rounded-full ${
-                          scene.tone === "gold"
+                        className={`grid h-15 w-15 shrink-0 place-items-center rounded-full ${scene.tone === "gold"
                             ? "bg-[#ffcf6e] text-ink"
                             : scene.tone === "mint"
                               ? "bg-mint text-ink"
                               : scene.tone === "ink"
                                 ? "bg-white text-ink"
                                 : "bg-sky text-ink"
-                        }`}
+                          }`}
                       >
                         <Icon size={24} strokeWidth={2.6} />
                       </span>
@@ -669,7 +667,7 @@ function FeatureSection() {
 
 function SocialProofSection() {
   return (
-    <section id="love" data-social-scroll="true" className="social-proof-story relative h-[430svh] scroll-mt-0">
+    <section id="love" data-social-scroll="true" data-anchor-progress="0.5" className="social-proof-story relative h-[330svh] scroll-mt-0">
       <div
         data-social-stage="prelude"
         data-social-step="-1"
@@ -733,7 +731,7 @@ function SocialProofSection() {
 
 function SecuritySection() {
   return (
-    <section id="trust" data-trust-scroll="true" className="trust-story relative h-[430svh] scroll-mt-0">
+    <section id="trust" data-trust-scroll="true" data-anchor-progress="0.5" className="trust-story relative h-[330svh] scroll-mt-0">
       <div
         data-trust-stage="prelude"
         data-trust-step="-1"
