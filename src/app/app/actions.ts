@@ -5,7 +5,7 @@ import { budgets, transactions } from "@/db/schema";
 import { categoryRules } from "@/lib/finance-data";
 import { makeTransaction, normalizeDate, parseCsvTransactions } from "@/lib/finance-model";
 import { auth } from "@clerk/nextjs/server";
-import { and, eq, sql } from "drizzle-orm";
+import { and, count, eq, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 export type ActionResult<T = object> = ({ ok: true } & T) | { ok: false; error: string };
@@ -13,6 +13,7 @@ export type ActionResult<T = object> = ({ ok: true } & T) | { ok: false; error: 
 const MAX_CSV_ROWS = 2000;
 const MAX_CSV_CHARS = 900_000; // stays under the 1 MB server action body limit
 const MAX_AMOUNT = 10_000_000;
+const MAX_TRANSACTIONS_PER_USER = 25_000;
 const SIGNALS = ["Watch", "Cleared", "Review"] as const;
 const KINDS = ["expense", "income"] as const;
 
@@ -36,6 +37,14 @@ function cleanAmount(value: unknown) {
 }
 
 const FAILED = { ok: false, error: "Something went wrong saving that. Try again." } as const;
+
+// ponytail: count-then-insert, so two concurrent imports can overshoot a little. Soft cap; fine for storage abuse.
+async function transactionCount(userId: string) {
+  const [row] = await getDb().select({ n: count() }).from(transactions).where(eq(transactions.userId, userId));
+  return row?.n ?? 0;
+}
+
+const STORAGE_FULL = `You have reached the ${MAX_TRANSACTIONS_PER_USER.toLocaleString()} transaction limit. Delete some old ones to add more.`;
 
 function refresh() {
   revalidatePath("/app", "layout");
@@ -73,6 +82,8 @@ export async function addTransaction(input: {
   );
 
   try {
+    if ((await transactionCount(userId)) >= MAX_TRANSACTIONS_PER_USER) return { ok: false, error: STORAGE_FULL };
+
     await getDb().insert(transactions).values({
       userId,
       date: row.date,
@@ -116,6 +127,15 @@ export async function importCsv(csvText: string): Promise<ActionResult<{ count: 
   }
 
   try {
+    const room = MAX_TRANSACTIONS_PER_USER - (await transactionCount(userId));
+    if (room <= 0) return { ok: false, error: STORAGE_FULL };
+    if (parsed.length > room) {
+      return {
+        ok: false,
+        error: `That import has ${parsed.length.toLocaleString()} rows, but you only have room for ${room.toLocaleString()} more (limit ${MAX_TRANSACTIONS_PER_USER.toLocaleString()}).`,
+      };
+    }
+
     await getDb()
       .insert(transactions)
       .values(

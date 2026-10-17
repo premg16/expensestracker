@@ -16,6 +16,9 @@ import { sql } from "drizzle-orm";
 import OpenAI from "openai";
 
 const DAILY_LIMIT = 50;
+// Across all users, to bound the OpenAI bill. Counted in ai_usage under user_id '*' (Clerk ids start with "user_").
+const GLOBAL_DAILY_LIMIT = 2_000;
+const GLOBAL_USAGE_KEY = "*";
 const MAX_MESSAGE_CHARS = 1000;
 const MODEL_TRANSACTIONS = 200;
 
@@ -74,11 +77,22 @@ export async function POST(request: Request) {
 
   let finance: Finance;
   try {
-    if ((await recordUsage(userId)) > DAILY_LIMIT) {
+    // Per-user first, so someone already over their own limit can't burn the shared budget.
+    if ((await recordUsage(userId, DAILY_LIMIT)) > DAILY_LIMIT) {
       return Response.json(
         {
           error: "Rate limited",
           message: `You have used all ${DAILY_LIMIT} companion questions for today. The limit resets at midnight UTC.`,
+        },
+        { status: 429 },
+      );
+    }
+
+    if ((await recordUsage(GLOBAL_USAGE_KEY, GLOBAL_DAILY_LIMIT)) > GLOBAL_DAILY_LIMIT) {
+      return Response.json(
+        {
+          error: "Rate limited",
+          message: "The companion is very busy today and has paused new questions. It will be back after midnight UTC.",
         },
         { status: 429 },
       );
@@ -127,13 +141,17 @@ export async function POST(request: Request) {
   }
 }
 
-// Atomic per-user, per-UTC-day counter. Returns the count including this request.
-async function recordUsage(userId: string) {
+// Atomic per-key, per-UTC-day counter. Returns the count including this request,
+// saturating at limit + 1 so blocked requests stop inflating it.
+async function recordUsage(userId: string, limit: number) {
   const day = new Date().toISOString().slice(0, 10);
   const [row] = await getDb()
     .insert(aiUsage)
     .values({ userId, day, count: 1 })
-    .onConflictDoUpdate({ target: [aiUsage.userId, aiUsage.day], set: { count: sql`${aiUsage.count} + 1` } })
+    .onConflictDoUpdate({
+      target: [aiUsage.userId, aiUsage.day],
+      set: { count: sql`least(${aiUsage.count} + 1, ${limit + 1})` },
+    })
     .returning({ count: aiUsage.count });
 
   return row?.count ?? 1;

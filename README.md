@@ -55,6 +55,8 @@ Core promise:
 4. Build command: `bun run build`.
 5. Install command: `bun install`.
 
+Before opening sign-ups to the public, work through [PRODUCTION.md](PRODUCTION.md) (Clerk production instance, env vars, landing copy).
+
 ## Next Build Priorities
 
 1. Bank sync and an import review queue.
