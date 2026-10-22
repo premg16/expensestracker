@@ -1,5 +1,5 @@
-import { PersonalDashboard } from "@/components/personal-dashboard";
+import { AppScreen } from "@/components/app-screen";
 
 export default function CardsPage() {
-  return <PersonalDashboard view="cards" />;
+  return <AppScreen view="cards" />;
 }

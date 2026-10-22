@@ -26,6 +26,9 @@
   --motion-fast: 180ms;
   --motion-medium: 420ms;
   --motion-slow: 720ms;
+  --story-fade: 320ms;
+  --story-move: 460ms;
+  --story-settle: 520ms;
   color-scheme: light;
   background: #c7e5ef;
   color: #171717;
@@ -704,8 +707,8 @@ a {
     scale(var(--landing-reveal-scale))
     rotate(var(--landing-reveal-rotate));
   transition:
-    opacity 720ms cubic-bezier(.16,1,.3,1),
-    transform 880ms cubic-bezier(.16,1,.3,1);
+    opacity var(--story-fade) cubic-bezier(.16,1,.3,1),
+    transform var(--story-move) cubic-bezier(.16,1,.3,1);
   will-change: opacity, transform;
 }
 
@@ -808,8 +811,8 @@ a {
 
 .social-proof-stage {
   --social-progress: 0;
-  --social-eyebrow-progress: 0;
-  --social-title-progress: 0;
+  --social-eyebrow-progress: 1;
+  --social-title-progress: 1;
   --social-dock-progress: 0;
   --social-card-progress: 0;
   isolation: isolate;
@@ -829,12 +832,12 @@ a {
   text-align: center;
   transform: translate(-50%, -50%);
   transition:
-    opacity 760ms cubic-bezier(.16,1,.3,1),
-    left 900ms cubic-bezier(.16,1,.3,1),
-    top 900ms cubic-bezier(.16,1,.3,1),
-    width 900ms cubic-bezier(.16,1,.3,1),
-    text-align 900ms cubic-bezier(.16,1,.3,1),
-    transform 900ms cubic-bezier(.16,1,.3,1);
+    opacity var(--story-fade) cubic-bezier(.16,1,.3,1),
+    left var(--story-settle) cubic-bezier(.16,1,.3,1),
+    top var(--story-settle) cubic-bezier(.16,1,.3,1),
+    width var(--story-settle) cubic-bezier(.16,1,.3,1),
+    text-align var(--story-settle) cubic-bezier(.16,1,.3,1),
+    transform var(--story-settle) cubic-bezier(.16,1,.3,1);
   will-change: opacity, left, top, width, transform;
 }
 
@@ -848,9 +851,9 @@ a {
     scale(calc(2.55 - var(--social-eyebrow-progress) * 1.55));
   transition:
     letter-spacing 220ms ease,
-    opacity 260ms ease,
+    opacity 160ms ease,
     text-shadow 220ms ease,
-    transform 380ms cubic-bezier(.16,1,.3,1);
+    transform 220ms cubic-bezier(.16,1,.3,1);
 }
 
 .social-main-title {
@@ -858,8 +861,8 @@ a {
   margin-inline: auto;
   font-size: clamp(4rem, 5.05vw, 5.65rem);
   transition:
-    max-width 900ms cubic-bezier(.16,1,.3,1),
-    font-size 900ms cubic-bezier(.16,1,.3,1);
+    max-width var(--story-settle) cubic-bezier(.16,1,.3,1),
+    font-size var(--story-settle) cubic-bezier(.16,1,.3,1);
 }
 
 .social-quote-mark {
@@ -916,7 +919,7 @@ a {
   transform: translate(-50%, 2rem) scale(0.97);
   transition:
     opacity 560ms ease,
-    transform 760ms cubic-bezier(.16,1,.3,1);
+    transform var(--story-move) cubic-bezier(.16,1,.3,1);
 }
 
 .social-proof-stage[data-social-stage="dock"] .social-testimonial-grid,
@@ -929,7 +932,7 @@ a {
   opacity: 0;
   pointer-events: none;
   transition:
-    opacity 620ms ease,
+    opacity var(--story-fade) ease,
     transform 840ms cubic-bezier(.16,1,.3,1),
     box-shadow 620ms ease;
   will-change: opacity, transform;
@@ -1034,8 +1037,8 @@ a {
 .trust-story-stage {
   --trust-step-top: clamp(19.5rem, 38vh, 22.5rem);
   --trust-progress: 0;
-  --trust-eyebrow-progress: 0;
-  --trust-title-progress: 0;
+  --trust-eyebrow-progress: 1;
+  --trust-title-progress: 1;
   --trust-dock-progress: 0;
   --trust-board-progress: 0;
   --trust-content-progress: 0;
@@ -1056,12 +1059,12 @@ a {
   text-align: center;
   transform: translate(-50%, -50%);
   transition:
-    opacity 760ms cubic-bezier(.16,1,.3,1),
-    left 900ms cubic-bezier(.16,1,.3,1),
-    top 900ms cubic-bezier(.16,1,.3,1),
-    width 900ms cubic-bezier(.16,1,.3,1),
-    text-align 900ms cubic-bezier(.16,1,.3,1),
-    transform 900ms cubic-bezier(.16,1,.3,1);
+    opacity var(--story-fade) cubic-bezier(.16,1,.3,1),
+    left var(--story-settle) cubic-bezier(.16,1,.3,1),
+    top var(--story-settle) cubic-bezier(.16,1,.3,1),
+    width var(--story-settle) cubic-bezier(.16,1,.3,1),
+    text-align var(--story-settle) cubic-bezier(.16,1,.3,1),
+    transform var(--story-settle) cubic-bezier(.16,1,.3,1);
   will-change: opacity, left, top, width, transform;
 }
 
@@ -1075,9 +1078,9 @@ a {
     scale(calc(2.55 - var(--trust-eyebrow-progress) * 1.55));
   transition:
     letter-spacing 220ms ease,
-    opacity 260ms ease,
+    opacity 160ms ease,
     text-shadow 220ms ease,
-    transform 380ms cubic-bezier(.16,1,.3,1);
+    transform 220ms cubic-bezier(.16,1,.3,1);
 }
 
 .trust-main-title {
@@ -1085,8 +1088,8 @@ a {
   margin-inline: auto;
   font-size: clamp(4.35rem, 5.65vw, 6.25rem);
   transition:
-    max-width 900ms cubic-bezier(.16,1,.3,1),
-    font-size 900ms cubic-bezier(.16,1,.3,1);
+    max-width var(--story-settle) cubic-bezier(.16,1,.3,1),
+    font-size var(--story-settle) cubic-bezier(.16,1,.3,1);
 }
 
 .trust-story-stage[data-trust-stage="prelude"] .trust-headline-lockup {
@@ -1121,8 +1124,8 @@ a {
   opacity: 0;
   transform: translateY(28px);
   transition:
-    opacity 420ms ease,
-    transform 560ms cubic-bezier(.16,1,.3,1);
+    opacity var(--story-fade) ease,
+    transform var(--story-move) cubic-bezier(.16,1,.3,1);
 }
 
 .trust-story-stage[data-trust-stage^="trust"] .trust-sync-copy {
@@ -1167,8 +1170,8 @@ a {
   pointer-events: none;
   transform: translateY(22px);
   transition:
-    opacity 620ms ease,
-    transform 760ms cubic-bezier(.16,1,.3,1);
+    opacity var(--story-fade) ease,
+    transform var(--story-move) cubic-bezier(.16,1,.3,1);
 }
 
 .trust-sync-step::before {
@@ -1244,8 +1247,8 @@ a {
   padding: 0;
   transform: translate(3.5rem, 1.6rem) scale(0.96);
   transition:
-    opacity 620ms ease,
-    transform 860ms cubic-bezier(.16,1,.3,1);
+    opacity var(--story-fade) ease,
+    transform var(--story-move) cubic-bezier(.16,1,.3,1);
 }
 
 .trust-board::before {
@@ -1280,8 +1283,8 @@ a {
   opacity: 0;
   transform: translateY(32px) scale(0.985);
   transition:
-    opacity 720ms ease,
-    transform 960ms cubic-bezier(.16,1,.3,1);
+    opacity var(--story-fade) ease,
+    transform var(--story-move) cubic-bezier(.16,1,.3,1);
 }
 
 .trust-story-stage[data-trust-stage="trust-1"] .trust-board-scene-1,
@@ -1896,8 +1899,8 @@ a {
 .problem-story-stage {
   --problem-step-top: clamp(23.5rem, 44vh, 26.5rem);
   --problem-progress: 0;
-  --problem-eyebrow-progress: 0;
-  --problem-title-progress: 0;
+  --problem-eyebrow-progress: 1;
+  --problem-title-progress: 1;
   --problem-dock-progress: 0;
   --problem-content-progress: 0;
   isolation: isolate;
@@ -1917,12 +1920,12 @@ a {
   text-align: center;
   transform: translate(-50%, -50%);
   transition:
-    opacity 760ms cubic-bezier(.16,1,.3,1),
-    left 900ms cubic-bezier(.16,1,.3,1),
-    top 900ms cubic-bezier(.16,1,.3,1),
-    width 900ms cubic-bezier(.16,1,.3,1),
-    transform 900ms cubic-bezier(.16,1,.3,1),
-    text-align 900ms cubic-bezier(.16,1,.3,1);
+    opacity var(--story-fade) cubic-bezier(.16,1,.3,1),
+    left var(--story-settle) cubic-bezier(.16,1,.3,1),
+    top var(--story-settle) cubic-bezier(.16,1,.3,1),
+    width var(--story-settle) cubic-bezier(.16,1,.3,1),
+    transform var(--story-settle) cubic-bezier(.16,1,.3,1),
+    text-align var(--story-settle) cubic-bezier(.16,1,.3,1);
   will-change: opacity, left, top, width, transform;
 }
 
@@ -1956,9 +1959,9 @@ a {
     scale(calc(2.55 - var(--problem-eyebrow-progress) * 1.55));
   transition:
     letter-spacing 220ms ease,
-    opacity 260ms ease,
+    opacity 160ms ease,
     text-shadow 220ms ease,
-    transform 380ms cubic-bezier(.16,1,.3,1);
+    transform 220ms cubic-bezier(.16,1,.3,1);
 }
 
 .question-eyebrow {
@@ -1971,9 +1974,9 @@ a {
     scale(calc(2.55 - var(--question-eyebrow-progress) * 1.55));
   transition:
     letter-spacing 220ms ease,
-    opacity 260ms ease,
+    opacity 160ms ease,
     text-shadow 220ms ease,
-    transform 380ms cubic-bezier(.16,1,.3,1);
+    transform 220ms cubic-bezier(.16,1,.3,1);
 }
 
 .problem-main-title {
@@ -1981,8 +1984,8 @@ a {
   margin-inline: auto;
   font-size: clamp(4.35rem, 5.65vw, 6.25rem);
   transition:
-    max-width 900ms cubic-bezier(.16,1,.3,1),
-    font-size 900ms cubic-bezier(.16,1,.3,1);
+    max-width var(--story-settle) cubic-bezier(.16,1,.3,1),
+    font-size var(--story-settle) cubic-bezier(.16,1,.3,1);
 }
 
 .problem-title-line,
@@ -2006,7 +2009,7 @@ a {
 .brief-title-word,
 .social-title-word,
 .trust-title-word {
-  --word-progress: 0;
+  --word-progress: 1;
   display: inline-block;
   margin-right: 0.18em;
   opacity: clamp(0, var(--word-progress), 1);
@@ -2035,9 +2038,9 @@ a {
   opacity: 0;
   transform: translateY(18px);
   transition:
-    opacity 620ms ease,
-    transform 720ms cubic-bezier(.16,1,.3,1),
-    margin-inline 900ms cubic-bezier(.16,1,.3,1);
+    opacity var(--story-fade) ease,
+    transform var(--story-move) cubic-bezier(.16,1,.3,1),
+    margin-inline var(--story-settle) cubic-bezier(.16,1,.3,1);
 }
 
 .problem-story-stage[data-problem-stage="dock"] .problem-headline-lockup,
@@ -2073,8 +2076,8 @@ a {
   opacity: 0;
   transform: translateY(28px);
   transition:
-    opacity 420ms ease,
-    transform 560ms cubic-bezier(.16,1,.3,1);
+    opacity var(--story-fade) ease,
+    transform var(--story-move) cubic-bezier(.16,1,.3,1);
 }
 
 .problem-story-stage[data-problem-stage^="step"] .problem-sync-copy {
@@ -2117,8 +2120,8 @@ a {
   pointer-events: none;
   transform: translateY(22px);
   transition:
-    opacity 620ms ease,
-    transform 760ms cubic-bezier(.16,1,.3,1);
+    opacity var(--story-fade) ease,
+    transform var(--story-move) cubic-bezier(.16,1,.3,1);
 }
 
 .problem-sync-step h3 {
@@ -2215,8 +2218,8 @@ a {
   pointer-events: none;
   transform: translate(3.5rem, 1.6rem) scale(0.96);
   transition:
-    opacity 620ms ease,
-    transform 860ms cubic-bezier(.16,1,.3,1);
+    opacity var(--story-fade) ease,
+    transform var(--story-move) cubic-bezier(.16,1,.3,1);
 }
 
 .problem-phone::before {
@@ -2275,8 +2278,8 @@ a {
   opacity: 0;
   transform: translateY(32px) scale(0.985);
   transition:
-    opacity 720ms ease,
-    transform 960ms cubic-bezier(.16,1,.3,1);
+    opacity var(--story-fade) ease,
+    transform var(--story-move) cubic-bezier(.16,1,.3,1);
 }
 
 .landing-stage[data-motion-ready="true"] .problem-story-stage[data-problem-stage="step-1"] .problem-phone-scene-one,
@@ -2297,7 +2300,7 @@ a {
 
 .problem-story-stage .problem-phone-bar {
   transform: scaleX(0.08);
-  transition: transform 900ms cubic-bezier(.16,1,.3,1);
+  transition: transform var(--story-settle) cubic-bezier(.16,1,.3,1);
 }
 
 .problem-story-stage[data-problem-stage="step-1"] .problem-phone-bar {
@@ -2482,9 +2485,9 @@ a {
 .question-story-stage {
   --question-step-top: clamp(23.5rem, 44vh, 26.5rem);
   --question-progress: 0;
-  --question-eyebrow-progress: 0;
+  --question-eyebrow-progress: 1;
   --question-intro-progress: 0;
-  --question-title-progress: 0;
+  --question-title-progress: 1;
   --question-dock-progress: 0;
   --question-board-progress: 0;
   --question-content-progress: 0;
@@ -2505,12 +2508,12 @@ a {
   text-align: center;
   transform: translate(-50%, -50%);
   transition:
-    opacity 760ms cubic-bezier(.16,1,.3,1),
-    left 900ms cubic-bezier(.16,1,.3,1),
-    top 900ms cubic-bezier(.16,1,.3,1),
-    width 900ms cubic-bezier(.16,1,.3,1),
-    text-align 900ms cubic-bezier(.16,1,.3,1),
-    transform 900ms cubic-bezier(.16,1,.3,1);
+    opacity var(--story-fade) cubic-bezier(.16,1,.3,1),
+    left var(--story-settle) cubic-bezier(.16,1,.3,1),
+    top var(--story-settle) cubic-bezier(.16,1,.3,1),
+    width var(--story-settle) cubic-bezier(.16,1,.3,1),
+    text-align var(--story-settle) cubic-bezier(.16,1,.3,1),
+    transform var(--story-settle) cubic-bezier(.16,1,.3,1);
   will-change: opacity, left, top, width, transform;
 }
 
@@ -2519,8 +2522,8 @@ a {
   margin-inline: auto;
   font-size: clamp(4.35rem, 5.65vw, 6.25rem);
   transition:
-    max-width 900ms cubic-bezier(.16,1,.3,1),
-    font-size 900ms cubic-bezier(.16,1,.3,1);
+    max-width var(--story-settle) cubic-bezier(.16,1,.3,1),
+    font-size var(--story-settle) cubic-bezier(.16,1,.3,1);
 }
 
 .question-story-stage[data-question-stage="prelude"] .question-chapter-copy {
@@ -2554,8 +2557,8 @@ a {
   opacity: 0;
   transform: translateY(28px);
   transition:
-    opacity 420ms ease,
-    transform 560ms cubic-bezier(.16,1,.3,1);
+    opacity var(--story-fade) ease,
+    transform var(--story-move) cubic-bezier(.16,1,.3,1);
 }
 
 .question-story-stage[data-question-stage^="question"] .question-track {
@@ -2600,8 +2603,8 @@ a {
   pointer-events: none;
   transform: translateY(22px);
   transition:
-    opacity 620ms ease,
-    transform 760ms cubic-bezier(.16,1,.3,1);
+    opacity var(--story-fade) ease,
+    transform var(--story-move) cubic-bezier(.16,1,.3,1);
 }
 
 .question-step::before {
@@ -2679,8 +2682,8 @@ a {
   padding: clamp(1.25rem, 2vw, 1.75rem);
   transform: translate(3.5rem, 1.6rem) scale(0.96);
   transition:
-    opacity 620ms ease,
-    transform 860ms cubic-bezier(.16,1,.3,1);
+    opacity var(--story-fade) ease,
+    transform var(--story-move) cubic-bezier(.16,1,.3,1);
 }
 
 .question-story-stage[data-question-stage^="question"] .question-board {
@@ -2717,8 +2720,8 @@ a {
   opacity: 0;
   transform: translateY(32px) scale(0.985);
   transition:
-    opacity 720ms ease,
-    transform 960ms cubic-bezier(.16,1,.3,1);
+    opacity var(--story-fade) ease,
+    transform var(--story-move) cubic-bezier(.16,1,.3,1);
 }
 
 .question-story-stage[data-question-stage="question-1"] .question-board-scene-1,
@@ -2847,8 +2850,8 @@ a {
 .brief-story-stage {
   --brief-step-top: clamp(23.5rem, 44vh, 26.5rem);
   --brief-progress: 0;
-  --brief-eyebrow-progress: 0;
-  --brief-title-progress: 0;
+  --brief-eyebrow-progress: 1;
+  --brief-title-progress: 1;
   --brief-dock-progress: 0;
   --brief-board-progress: 0;
   --brief-content-progress: 0;
@@ -2869,12 +2872,12 @@ a {
   text-align: center;
   transform: translate(-50%, -50%);
   transition:
-    opacity 760ms cubic-bezier(.16,1,.3,1),
-    left 900ms cubic-bezier(.16,1,.3,1),
-    top 900ms cubic-bezier(.16,1,.3,1),
-    width 900ms cubic-bezier(.16,1,.3,1),
-    text-align 900ms cubic-bezier(.16,1,.3,1),
-    transform 900ms cubic-bezier(.16,1,.3,1);
+    opacity var(--story-fade) cubic-bezier(.16,1,.3,1),
+    left var(--story-settle) cubic-bezier(.16,1,.3,1),
+    top var(--story-settle) cubic-bezier(.16,1,.3,1),
+    width var(--story-settle) cubic-bezier(.16,1,.3,1),
+    text-align var(--story-settle) cubic-bezier(.16,1,.3,1),
+    transform var(--story-settle) cubic-bezier(.16,1,.3,1);
   will-change: opacity, left, top, width, transform;
 }
 
@@ -2888,9 +2891,9 @@ a {
     scale(calc(2.55 - var(--brief-eyebrow-progress) * 1.55));
   transition:
     letter-spacing 220ms ease,
-    opacity 260ms ease,
+    opacity 160ms ease,
     text-shadow 220ms ease,
-    transform 380ms cubic-bezier(.16,1,.3,1);
+    transform 220ms cubic-bezier(.16,1,.3,1);
 }
 
 .brief-main-title {
@@ -2898,8 +2901,8 @@ a {
   margin-inline: auto;
   font-size: clamp(4.35rem, 5.65vw, 6.25rem);
   transition:
-    max-width 900ms cubic-bezier(.16,1,.3,1),
-    font-size 900ms cubic-bezier(.16,1,.3,1);
+    max-width var(--story-settle) cubic-bezier(.16,1,.3,1),
+    font-size var(--story-settle) cubic-bezier(.16,1,.3,1);
 }
 
 .brief-story-stage[data-brief-stage="prelude"] .brief-headline-lockup {
@@ -2933,8 +2936,8 @@ a {
   opacity: 0;
   transform: translateY(28px);
   transition:
-    opacity 420ms ease,
-    transform 560ms cubic-bezier(.16,1,.3,1);
+    opacity var(--story-fade) ease,
+    transform var(--story-move) cubic-bezier(.16,1,.3,1);
 }
 
 .brief-story-stage[data-brief-stage^="brief"] .brief-sync-copy {
@@ -2979,8 +2982,8 @@ a {
   pointer-events: none;
   transform: translateY(22px);
   transition:
-    opacity 620ms ease,
-    transform 760ms cubic-bezier(.16,1,.3,1);
+    opacity var(--story-fade) ease,
+    transform var(--story-move) cubic-bezier(.16,1,.3,1);
 }
 
 .brief-sync-step::before {
@@ -3060,8 +3063,8 @@ a {
   padding: clamp(1.25rem, 2vw, 1.75rem);
   transform: translate(3.5rem, 1.6rem) scale(0.96);
   transition:
-    opacity 620ms ease,
-    transform 860ms cubic-bezier(.16,1,.3,1);
+    opacity var(--story-fade) ease,
+    transform var(--story-move) cubic-bezier(.16,1,.3,1);
 }
 
 .brief-board::before {
@@ -3111,8 +3114,8 @@ a {
   opacity: 0;
   transform: translateY(32px) scale(0.985);
   transition:
-    opacity 720ms ease,
-    transform 960ms cubic-bezier(.16,1,.3,1);
+    opacity var(--story-fade) ease,
+    transform var(--story-move) cubic-bezier(.16,1,.3,1);
 }
 
 .brief-story-stage[data-brief-stage="brief-1"] .brief-board-scene-1,
@@ -3490,7 +3493,7 @@ a {
   pointer-events: none;
   background: linear-gradient(90deg, rgba(238, 95, 86, 0.1), transparent 42%);
   opacity: 0;
-  transition: opacity 420ms ease;
+  transition: opacity var(--story-fade) ease;
 }
 
 .problem-deduction.is-visible::after {

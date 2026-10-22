@@ -6,3 +6,4 @@ node_modules/
 bun.lockb
 *.tsbuildinfo
 .DS_Store
+.vercel

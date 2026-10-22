@@ -1,9 +1,18 @@
 import { HapticLink } from "@/components/haptic-link";
-import { ArrowLeft, BadgeCheck, Fingerprint, KeyRound, ShieldCheck, Sparkles } from "lucide-react";
+import { SignInForm } from "@/components/sign-in-form";
+import { auth } from "@clerk/nextjs/server";
+import { ArrowLeft, BadgeCheck, LockKeyhole, ShieldCheck, Sparkles } from "lucide-react";
+import { redirect } from "next/navigation";
 
-const trustItems = ["Google OAuth route", "Passkey-ready interface", "Preview-ready app access", "Server-side secrets"];
+const trustItems = ["Google or email sign-in", "Data private to your account", "Server-side secrets", "CSV import"];
 
-export default function SignInPage() {
+export default async function SignInPage() {
+  const { userId } = await auth();
+
+  if (userId) {
+    redirect("/app");
+  }
+
   return (
     <main className="relative min-h-screen overflow-hidden px-4 py-6 text-ink sm:px-6 lg:px-8">
       <div className="pointer-events-none absolute inset-0">
@@ -23,27 +32,11 @@ export default function SignInPage() {
             <p className="text-sm font-black uppercase text-ink/42">Welcome back</p>
             <h1 className="font-display display-kern mt-3 text-6xl font-black leading-none max-sm:text-4xl">Know your float.</h1>
             <p className="mt-5 max-w-md text-base leading-7 text-ink/62">
-              Sign in with Google to get started, or open the app and check today&apos;s spendable number.
+              Sign in with Google or a one-time email code. New here? Your account is created the first time you sign in.
             </p>
           </div>
 
-          <div className="mt-10 grid gap-3">
-            <HapticLink
-              href="/api/auth/signin/google"
-              prefetch={false}
-              className="black-button haptic flex h-14 items-center justify-center gap-3 rounded-[1.3rem] text-base font-black"
-            >
-              <span className="grid h-7 w-7 place-items-center rounded-full bg-white text-sm font-black text-ink">G</span>
-              Continue with Google
-            </HapticLink>
-            <HapticLink
-              href="/app"
-              className="haptic flex h-14 items-center justify-center gap-3 rounded-[1.3rem] bg-sky text-base font-black shadow-sm"
-            >
-              <Fingerprint size={20} />
-              Open Float
-            </HapticLink>
-          </div>
+          <SignInForm />
 
           <div className="mt-8 grid gap-3">
             {trustItems.map((item) => (
@@ -78,18 +71,18 @@ export default function SignInPage() {
             <span className="grid h-13 w-13 place-items-center rounded-full bg-sky">
               <Sparkles size={23} />
             </span>
-            <h2 className="font-display display-kern mt-10 text-5xl font-black leading-none">A login screen that feels launch-ready.</h2>
+            <h2 className="font-display display-kern mt-10 text-5xl font-black leading-none">Your money, your account.</h2>
             <p className="mt-5 text-base leading-7 text-ink/62">
-              Premium spacing, touch-friendly controls, social sign-in, direct app access, and the same visual language as the
-              product.
+              Sign in with Google or an emailed code. Your transactions and budgets are stored against your account and
+              nobody else&apos;s.
             </p>
             <div className="mt-8 flex items-center gap-3 rounded-[1.4rem] bg-ink p-4 text-white">
               <span className="grid h-11 w-11 place-items-center rounded-full bg-[#ffcf6e] text-ink">
-                <KeyRound size={19} />
+                <LockKeyhole size={19} />
               </span>
               <div>
-                <p className="font-black">Passkey-ready</p>
-                <p className="text-sm text-white/52">Prepared for the next auth layer.</p>
+                <p className="font-black">Private by default</p>
+                <p className="text-sm text-white/52">Every record is scoped to your account.</p>
               </div>
             </div>
           </div>

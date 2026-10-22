@@ -1,3 +1,4 @@
+import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata, Viewport } from "next";
 import { Fraunces, JetBrains_Mono, Manrope } from "next/font/google";
 import { PwaRegister } from "@/components/pwa-register";
@@ -45,15 +46,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      data-scroll-behavior="smooth"
-      className={`${sansFont.variable} ${displayFont.variable} ${monoFont.variable}`}
-    >
-      <body>
-        {children}
-        <PwaRegister />
-      </body>
-    </html>
+    <ClerkProvider>
+      <html
+        lang="en"
+        data-scroll-behavior="smooth"
+        className={`${sansFont.variable} ${displayFont.variable} ${monoFont.variable}`}
+      >
+        <body>
+          {children}
+          <PwaRegister />
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }
